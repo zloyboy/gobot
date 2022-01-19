@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	godotenv "github.com/joho/godotenv"
 )
 
 var numericKeyboard = tgbotapi.NewReplyKeyboard(
@@ -20,7 +22,12 @@ var numericKeyboard = tgbotapi.NewReplyKeyboard(
 )
 
 func main() {
-	bot, err := tgbotapi.NewBotAPI("token")
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+	API_TOKEN := os.Getenv("TELEGRAM_API_TOKEN")
+
+	bot, err := tgbotapi.NewBotAPI(API_TOKEN)
 	if err != nil {
 		log.Panic(err)
 	}
