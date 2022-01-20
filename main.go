@@ -15,6 +15,7 @@ var ageGroup = map[string]int{ages[0]: 15, ages[1]: 25, ages[2]: 35, ages[3]: 45
 var user_age = make(map[int64]int)
 var user_timestamp = make(map[int64]int64)
 var repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
+var start_msg = "Независимый подсчет статистики по COVID-19\nУкажите вашу возрастную группу:"
 
 var numericInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
@@ -56,6 +57,7 @@ func main() {
 	u.Timeout = 60
 
 	updates := bot.GetUpdatesChan(u)
+	var chatID int64
 	var userID int64
 	var userData string
 
@@ -64,11 +66,16 @@ func main() {
 			continue
 		}
 
-		userID = update.Message.From.ID
+		chatID = update.FromChat().ID
+		userID = update.SentFrom().ID
+		if update.Message != nil {
+			userData = update.Message.Text
+		}
 		if update.CallbackQuery != nil {
 			userData = update.CallbackQuery.Data
 		}
-		log.Printf("userID %d, %s", userID, userData)
+		log.Printf("user %d, data %s", userID, userData)
+
 		if tout, ok := user_timestamp[userID]; ok {
 			log.Printf("Found timestamp %d", tout)
 			user_timestamp[userID] = tout
@@ -80,12 +87,13 @@ func main() {
 		// new user - send age question
 		user_age[userID] = 0
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		log.Printf("Message text: %s", msg.Text)
-		if update.Message.Text == "Start" {
+		msg := tgbotapi.NewMessage(chatID, "")
+		if userData == "Start" {
 			msg.ReplyMarkup = numericInlineKeyboard
+			msg.Text = start_msg
 		} else {
 			msg.ReplyMarkup = startKeyboard
+			msg.Text = repeat_msg
 		}
 
 		if _, err := bot.Send(msg); err != nil {
