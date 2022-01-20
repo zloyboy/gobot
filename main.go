@@ -1,11 +1,13 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"os"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	godotenv "github.com/joho/godotenv"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var cntAll, cntYes, cntNo int
@@ -37,6 +39,9 @@ var startKeyboard = tgbotapi.NewReplyKeyboard(
 )
 
 func main() {
+	sqliteDatabase, _ := sql.Open("sqlite3", "db/stat.db")
+	defer sqliteDatabase.Close()
+
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 	}
