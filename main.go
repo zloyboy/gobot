@@ -1,20 +1,21 @@
 package main
 
 import (
-	"database/sql"
 	"log"
 	"os"
 
+	"github.com/zloyboy/gobot/database"
 	"github.com/zloyboy/gobot/telegram"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	godotenv "github.com/joho/godotenv"
-	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	sqliteDatabase, _ := sql.Open("sqlite3", "data/stat.db")
-	defer sqliteDatabase.Close()
+	if err := database.Init(); err != nil {
+		log.Print("Can't open database")
+		return
+	}
 
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
@@ -26,9 +27,8 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+	//bot.Debug = true
 
-	bot.Debug = true
-
-	tBot := telegram.NewBot(bot)
-	tBot.Start()
+	teleBot := telegram.NewBot(bot)
+	teleBot.Start()
 }
