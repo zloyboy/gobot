@@ -12,8 +12,7 @@ import (
 )
 
 func main() {
-	if err := database.Init(); err != nil {
-		log.Print("Can't open database")
+	if !database.InitDb() {
 		return
 	}
 
