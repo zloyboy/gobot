@@ -2,6 +2,9 @@ package telegram
 
 import (
 	"log"
+	"time"
+
+	"github.com/zloyboy/gobot/database"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -34,11 +37,24 @@ var startKeyboard = tgbotapi.NewReplyKeyboard(
 )
 
 type Bot struct {
-	bot *tgbotapi.BotAPI
+	bot   *tgbotapi.BotAPI
+	dbase *database.Dbase
 }
 
-func NewBot(bot *tgbotapi.BotAPI) *Bot {
-	return &Bot{bot: bot}
+func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase) *Bot {
+	return &Bot{bot: bot, dbase: db}
+}
+
+func (b *Bot) stillTimeout(userID int64) bool {
+	curr_time := time.Now().Unix()
+	if tstamp, ok := user_timestamp[userID]; ok {
+		log.Printf("Timestamp %d, pass %d", tstamp, (curr_time - tstamp))
+		if (curr_time - tstamp) < 10 {
+			return true
+		}
+	}
+	user_timestamp[userID] = curr_time
+	return false
 }
 
 func (b *Bot) Start() error {
@@ -47,9 +63,6 @@ func (b *Bot) Start() error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	updates := b.bot.GetUpdatesChan(u)
-	/*if err != nil {
-		return err
-	}*/
 
 	var chatID int64
 	var userID int64
@@ -60,8 +73,8 @@ func (b *Bot) Start() error {
 			continue
 		}
 
-		chatID = update.FromChat().ID
 		userID = update.SentFrom().ID
+		chatID = update.FromChat().ID
 		if update.Message != nil {
 			userData = update.Message.Text
 		}
@@ -70,21 +83,23 @@ func (b *Bot) Start() error {
 		}
 		log.Printf("user %d, data %s", userID, userData)
 
-		if tout, ok := user_timestamp[userID]; ok {
-			log.Printf("Found timestamp %d", tout)
-			user_timestamp[userID] = tout
-		} else {
-			log.Printf("Init timestamp 0")
-			user_timestamp[userID] = 10
-		}
-
-		// new user - send age question
-		user_age[userID] = 0
-
 		msg := tgbotapi.NewMessage(chatID, "")
-		if userData == "Start" {
-			msg.ReplyMarkup = numericInlineKeyboard
-			msg.Text = start_msg
+
+		// first call from user
+		if update.Message != nil {
+			// repeat start timeout is 10 sec
+			if b.stillTimeout(userID) {
+				continue
+			}
+
+			if b.dbase.CheckIdName(userID) {
+				// exist user - send statistic
+			} else {
+				// new user - send age question
+				user_age[userID] = 0
+				msg.ReplyMarkup = numericInlineKeyboard
+				msg.Text = start_msg
+			}
 		} else {
 			msg.ReplyMarkup = startKeyboard
 			msg.Text = repeat_msg

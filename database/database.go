@@ -12,8 +12,6 @@ type Dbase struct {
 	db *sql.DB
 }
 
-var dbase Dbase
-
 func createDb(db *sql.DB) error {
 	// read scripts
 	content, err := ioutil.ReadFile("data/createtbl.sql")
@@ -35,16 +33,16 @@ func createDb(db *sql.DB) error {
 	return nil
 }
 
-func InitDb() bool {
+func InitDb() *Dbase {
 	db, err := sql.Open("sqlite3", "data/stat.db")
 	if err != nil || db == nil {
 		log.Print("Can't init sqlite3")
-		return false
+		return nil
 	}
 	err = db.Ping()
 	if err != nil {
 		log.Print("Can't ping sqlite3")
-		return false
+		return nil
 	}
 	var tableNname string
 	err = db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='user'").Scan(&tableNname)
@@ -53,9 +51,12 @@ func InitDb() bool {
 		err = createDb(db)
 	}
 	if err != nil {
-		return false
+		return nil
 	}
-	dbase.db = db
 
-	return true
+	return &Dbase{db: db}
+}
+
+func (dbase *Dbase) CheckIdName(id int64) bool {
+	return false
 }

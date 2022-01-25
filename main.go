@@ -12,10 +12,10 @@ import (
 )
 
 func main() {
-	if !database.InitDb() {
+	dbase := database.InitDb()
+	if dbase == nil {
 		return
 	}
-
 	if err := godotenv.Load(); err != nil {
 		log.Print("No .env file found")
 		return
@@ -28,6 +28,6 @@ func main() {
 	}
 	//bot.Debug = true
 
-	teleBot := telegram.NewBot(bot)
+	teleBot := telegram.NewBot(bot, dbase)
 	teleBot.Start()
 }
