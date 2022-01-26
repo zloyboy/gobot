@@ -57,6 +57,8 @@ func InitDb() *Dbase {
 	return &Dbase{db: db}
 }
 
-func (dbase *Dbase) CheckIdName(id int64) bool {
-	return false
+func (dbase *Dbase) CheckIdName(id int64) (string, error) {
+	var userNname = ""
+	err := dbase.db.QueryRow("SELECT name FROM user WHERE id=?", id).Scan(&userNname)
+	return userNname, err
 }

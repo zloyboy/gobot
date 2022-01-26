@@ -17,6 +17,15 @@ var user_timestamp = make(map[int64]int64)
 var repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
 var start_msg = "Независимый подсчет статистики по COVID-19\nУкажите вашу возрастную группу:"
 
+func inAges(age string) bool {
+	switch age {
+	case
+		ages[0], ages[1], ages[2], ages[3], ages[4], ages[5]:
+		return true
+	}
+	return false
+}
+
 var numericInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
 		tgbotapi.NewInlineKeyboardButtonData(ages[0], ages[0]),
@@ -27,6 +36,13 @@ var numericInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardButtonData(ages[3], ages[3]),
 		tgbotapi.NewInlineKeyboardButtonData(ages[4], ages[4]),
 		tgbotapi.NewInlineKeyboardButtonData(ages[5], ages[5]),
+	),
+)
+
+var numericResKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData("Да", "1"),
+		tgbotapi.NewInlineKeyboardButtonData("Нет", "0"),
 	),
 )
 
@@ -84,16 +100,16 @@ func (b *Bot) Start() error {
 		log.Printf("user %d, data %s", userID, userData)
 
 		msg := tgbotapi.NewMessage(chatID, "")
-
 		// first call from user
 		if update.Message != nil {
 			// repeat start timeout is 10 sec
 			if b.stillTimeout(userID) {
 				continue
 			}
-
-			if b.dbase.CheckIdName(userID) {
+			userName, err := b.dbase.CheckIdName(userID)
+			if err == nil {
 				// exist user - send statistic
+				msg.Text = "Вы уже приняли участие в подсчете под именем " + userName + repeat_msg
 			} else {
 				// new user - send age question
 				user_age[userID] = 0
@@ -101,8 +117,22 @@ func (b *Bot) Start() error {
 				msg.Text = start_msg
 			}
 		} else {
-			msg.ReplyMarkup = startKeyboard
-			msg.Text = repeat_msg
+			// user_age must have key=userID
+			if uage, ok := user_age[userID]; ok {
+				if uage == 0 {
+					// get age - send res question
+					age := userData
+					if inAges(age) {
+						user_age[userID] = ageGroup[age]
+						msg.Text = "Вы переболели covid19?\n(по официальному мед.заключению)"
+						msg.ReplyMarkup = numericResKeyboard
+					} else {
+						msg.Text = "Произошла ошибка: неверный возраст " + age
+					}
+				}
+			} else {
+				msg.Text = "Произошла ошибка сервера"
+			}
 		}
 
 		if _, err := b.bot.Send(msg); err != nil {
