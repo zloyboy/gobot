@@ -74,3 +74,27 @@ func (dbase *Dbase) Insert(id int64, date string, name string, age int, res int)
 	cursor.Exec(id, date, name, age, res)
 	return nil
 }
+
+func (dbase *Dbase) CountUsers() int {
+	var count = 0
+	dbase.db.QueryRow("SELECT count(*) FROM user").Scan(&count)
+	return count
+}
+
+func (dbase *Dbase) CountRes() int {
+	var res = 0
+	dbase.db.QueryRow("SELECT count(*) FROM user WHERE res=1").Scan(&res)
+	return res
+}
+
+func (dbase *Dbase) CountAge(age int) int {
+	var count = 0
+	dbase.db.QueryRow("SELECT count(*) FROM user WHERE age=?", age).Scan(&count)
+	return count
+}
+
+func (dbase *Dbase) CountAgeRes(age int) int {
+	var res = 0
+	dbase.db.QueryRow("SELECT count(*) FROM user WHERE age=? AND res=1", age).Scan(&res)
+	return res
+}
