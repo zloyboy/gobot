@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/zloyboy/gobot/database"
@@ -83,6 +84,7 @@ func (b *Bot) Start() error {
 	var chatID int64
 	var userID int64
 	var userData string
+	var userName string
 
 	for update := range updates {
 		if update.Message == nil && update.CallbackQuery == nil { // ignore non-Message updates
@@ -90,6 +92,7 @@ func (b *Bot) Start() error {
 		}
 
 		userID = update.SentFrom().ID
+		userName = update.SentFrom().FirstName
 		chatID = update.FromChat().ID
 		if update.Message != nil {
 			userData = update.Message.Text
@@ -106,10 +109,10 @@ func (b *Bot) Start() error {
 			if b.stillTimeout(userID) {
 				continue
 			}
-			userName, err := b.dbase.CheckIdName(userID)
+			uname, err := b.dbase.CheckIdName(userID)
 			if err == nil {
 				// exist user - send statistic
-				msg.Text = "Вы уже приняли участие в подсчете под именем " + userName + repeat_msg
+				msg.Text = "Вы уже приняли участие в подсчете под именем " + uname + repeat_msg
 			} else {
 				// new user - send age question
 				user_age[userID] = 0
@@ -128,6 +131,17 @@ func (b *Bot) Start() error {
 						msg.ReplyMarkup = numericResKeyboard
 					} else {
 						msg.Text = "Произошла ошибка: неверный возраст " + age
+					}
+				} else {
+					// write poll results to DB
+					//outMsg := "Произошла ошибка: повторный ввод"
+					res, _ := strconv.Atoi(userData)
+					if b.dbase.NewId(userID) {
+						log.Printf("insert id %d, name %s, age %d, res %d", userID, userName, user_age[userID], res)
+						b.dbase.Insert(userID, "2022-01-01 00:00:00", userName, user_age[userID], res)
+						msg.Text = "Статистика обновлена"
+					} else {
+						msg.Text = "Произошла ошибка: повторный ввод"
 					}
 				}
 			} else {

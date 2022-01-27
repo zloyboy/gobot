@@ -62,3 +62,15 @@ func (dbase *Dbase) CheckIdName(id int64) (string, error) {
 	err := dbase.db.QueryRow("SELECT name FROM user WHERE id=?", id).Scan(&userNname)
 	return userNname, err
 }
+
+func (dbase *Dbase) NewId(id int64) bool {
+	var userID = 0
+	dbase.db.QueryRow("SELECT id FROM user WHERE id=?", id).Scan(&userID)
+	return userID == 0
+}
+
+func (dbase *Dbase) Insert(id int64, date string, name string, age int, res int) error {
+	cursor, _ := dbase.db.Prepare("INSERT INTO user(id, created, name, age, res) values(?, ?, ?, ?, ?)")
+	cursor.Exec(id, date, name, age, res)
+	return nil
+}
