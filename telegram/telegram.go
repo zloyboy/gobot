@@ -10,7 +10,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var user_age = make(map[int64]int)
+var user_age_idx = make(map[int64]int)
 var user_timestamp = make(map[int64]int64)
 var repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
 var start_msg = "Независимый подсчет статистики по COVID-19\nУкажите вашу возрастную группу:"
@@ -81,18 +81,18 @@ func (b *Bot) Start() error {
 				msg.ReplyMarkup = startKeyboard
 			} else {
 				// new user - send age question
-				user_age[userID] = 0
+				user_age_idx[userID] = -1
 				msg.Text = start_msg
 				msg.ReplyMarkup = numericInlineKeyboard
 			}
 		} else {
-			// user_age must have key=userID
-			if uage, ok := user_age[userID]; ok {
-				if uage == 0 {
+			// user_age_idx must have key=userID
+			if uage, ok := user_age_idx[userID]; ok {
+				if uage == -1 {
 					// get age - send res question
 					age := userData
 					if inAges(age) {
-						user_age[userID] = ageGroup[age]
+						user_age_idx[userID] = age_idx[age]
 						msg.Text = "Вы переболели covid19?\n(по официальному мед.заключению)"
 						msg.ReplyMarkup = numericResKeyboard
 					} else {
@@ -101,14 +101,16 @@ func (b *Bot) Start() error {
 				} else {
 					// write poll results to DB
 					outMsg := "Произошла ошибка: повторный ввод"
-					res, _ := strconv.Atoi(userData)
+					ill, _ := strconv.Atoi(userData)
 					if b.dbase.NewId(userID) {
-						log.Printf("insert id %d, name %s, age %d, res %d", userID, userName, user_age[userID], res)
+						aver_age := age_mid[user_age_idx[userID]]
+						log.Printf("insert id %d, name %s, age %d, ill %d", userID, userName, aver_age, ill)
 						b.dbase.Insert(userID,
 							time.Now().Local().Format("2006-01-02 15:04:05"),
 							userName,
-							user_age[userID],
-							res)
+							aver_age,
+							ill)
+						b.stat.RefreshStatic(user_age_idx[userID], ill)
 						outMsg = b.stat.MakeStatic()
 					}
 					msg.Text = outMsg

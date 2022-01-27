@@ -81,19 +81,19 @@ func (dbase *Dbase) CountUsers() int {
 	return count
 }
 
-func (dbase *Dbase) CountRes() int {
+func (dbase *Dbase) CountIll() int {
 	var res = 0
 	dbase.db.QueryRow("SELECT count(*) FROM user WHERE res=1").Scan(&res)
 	return res
 }
 
-func (dbase *Dbase) CountAge(age int) int {
+func (dbase *Dbase) CountAgeGroup(age int) int {
 	var count = 0
 	dbase.db.QueryRow("SELECT count(*) FROM user WHERE age=?", age).Scan(&count)
 	return count
 }
 
-func (dbase *Dbase) CountAgeRes(age int) int {
+func (dbase *Dbase) CountAgeGroupIll(age int) int {
 	var res = 0
 	dbase.db.QueryRow("SELECT count(*) FROM user WHERE age=? AND res=1", age).Scan(&res)
 	return res
