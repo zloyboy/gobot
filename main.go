@@ -16,7 +16,7 @@ func main() {
 	if dbase == nil {
 		return
 	}
-	if err := godotenv.Load(); err != nil {
+	if err := godotenv.Load("data/.env"); err != nil {
 		log.Print("No .env file found")
 		return
 	}
