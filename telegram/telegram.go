@@ -2,17 +2,11 @@ package telegram
 
 import (
 	"log"
-	"time"
 
 	"github.com/zloyboy/gobot/database"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
-
-var user_age_idx = make(map[int64]int)
-var user_timestamp = make(map[int64]int64)
-var repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
-var start_msg = "Независимый подсчет статистики по COVID-19\nУкажите вашу возрастную группу:"
 
 type Bot struct {
 	bot   *tgbotapi.BotAPI
@@ -22,18 +16,6 @@ type Bot struct {
 
 func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase) *Bot {
 	return &Bot{bot: bot, dbase: db, stat: Stat()}
-}
-
-func (b *Bot) userTimeout(userID int64) bool {
-	curr_time := time.Now().Unix()
-	if tstamp, ok := user_timestamp[userID]; ok {
-		log.Printf("Timestamp %d, pass %d", tstamp, (curr_time - tstamp))
-		if (curr_time - tstamp) < 10 {
-			return true
-		}
-	}
-	user_timestamp[userID] = curr_time
-	return false
 }
 
 func (b *Bot) Run() error {
@@ -51,33 +33,35 @@ func (b *Bot) Run() error {
 		}
 
 		userID := update.SentFrom().ID
-		userName := update.SentFrom().FirstName
-		chatID := update.FromChat().ID
 		var userData string
 		if update.Message != nil {
 			userData = update.Message.Text
 		} else if update.CallbackQuery != nil {
 			userData = update.CallbackQuery.Data
 		}
-		log.Printf("user %d, data %s", userID, userData)
+
+		if uses, ok := user_session[userID]; ok {
+			log.Printf("doing user %d, data %s, name %s", userID, userData, uses.userName)
+		} else {
+			chatID := update.FromChat().ID
+			userName := update.SentFrom().FirstName
+			user_session[userID] = &UserSession{b, userID, chatID, 0, userName, -2}
+			log.Printf("Start user %d, data %s", userID, userData)
+		}
 
 		if update.Message != nil {
-			if b.userTimeout(userID) {
+			if user_session[userID].UserTimeout() {
 				continue
 			}
-			b.askAge_01(userID, chatID)
+			user_session[userID].askAge_01()
 		} else {
-			// user_age_idx must have key=userID
-			if uage, ok := user_age_idx[userID]; ok {
-				if uage == -1 {
-					// get age - send res question
-					b.askIll_02(userID, chatID, userData)
-				} else {
-					// write poll results to DB
-					b.writeResult_03(userID, chatID, userData, userName)
-				}
+			if user_session[userID].GetAgeIdx() == -1 {
+				// get age - send res question
+				user_session[userID].askIll_02(userData)
 			} else {
-				b.internalError(chatID)
+				// write poll results to DB
+				user_session[userID].writeResult_03(userData)
+				delete(user_session, userID)
 			}
 		}
 	}
