@@ -27,6 +27,8 @@ func (b *Bot) Run() error {
 
 	b.readStatFromDb()
 
+	userChan := make(chan string)
+
 	for update := range updates {
 		if update.Message == nil && update.CallbackQuery == nil { // ignore non-Message updates
 			continue
@@ -40,29 +42,16 @@ func (b *Bot) Run() error {
 			userData = update.CallbackQuery.Data
 		}
 
-		if uses, ok := user_session[userID]; ok {
-			log.Printf("doing user %d, data %s, name %s", userID, userData, uses.userName)
+		if _, ok := user_session[userID]; ok {
+			log.Printf("doing user %d, data %s", userID, userData)
+			userChan <- userData
 		} else {
 			chatID := update.FromChat().ID
 			userName := update.SentFrom().FirstName
-			user_session[userID] = &UserSession{b, userID, chatID, 0, userName, -2}
 			log.Printf("Start user %d, data %s", userID, userData)
-		}
 
-		if update.Message != nil {
-			if user_session[userID].UserTimeout() {
-				continue
-			}
-			user_session[userID].askAge_01()
-		} else {
-			if user_session[userID].GetAgeIdx() == -1 {
-				// get age - send res question
-				user_session[userID].askIll_02(userData)
-			} else {
-				// write poll results to DB
-				user_session[userID].writeResult_03(userData)
-				delete(user_session, userID)
-			}
+			user_session[userID] = &UserSession{b, userID, chatID, 0, userName, -2}
+			go user_session[userID].RunSurvey(userChan)
 		}
 	}
 

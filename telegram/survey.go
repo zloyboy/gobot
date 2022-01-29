@@ -33,10 +33,6 @@ func (s *UserSession) UserTimeout() bool {
 	return false
 }
 
-func (s *UserSession) GetAgeIdx() int {
-	return s.age_idx
-}
-
 func (s *UserSession) askAge_01() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
@@ -91,7 +87,15 @@ func (s *UserSession) writeResult_03(userData string) {
 	s.b.bot.Send(msg)
 }
 
-/*func (s *UserSession) internalError() {
-	msg := tgbotapi.NewMessage(s.chatID, "Произошла ошибка сервера")
-	s.b.bot.Send(msg)
-}*/
+func (s *UserSession) RunSurvey(ch chan string) {
+	s.askAge_01()
+	for {
+		data := <-ch
+		if s.age_idx == -1 {
+			s.askIll_02(data)
+		} else {
+			s.writeResult_03(data)
+			return
+		}
+	}
+}
