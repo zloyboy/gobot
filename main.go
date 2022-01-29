@@ -29,5 +29,5 @@ func main() {
 	//bot.Debug = true
 
 	teleBot := telegram.NewBot(bot, dbase)
-	teleBot.Start()
+	teleBot.Run()
 }
