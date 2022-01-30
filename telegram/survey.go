@@ -12,25 +12,14 @@ var repeat_msg = "\nДля повторного показа статистик�
 var start_msg = "Независимый подсчет статистики по COVID-19\nУкажите вашу возрастную группу:"
 
 var user_session = make(map[int64]*UserSession)
+var user_timestamp = make(map[int64]int64)
 
 type UserSession struct {
 	b              *Bot
 	userID, chatID int64
-	timestamp      int64
 	userName       string
 	age_idx        int
-}
-
-func (s *UserSession) UserTimeout() bool {
-	curr_time := time.Now().Unix()
-	if 0 < s.timestamp {
-		log.Printf("Timestamp %d, pass %d", s.timestamp, (curr_time - s.timestamp))
-		if (curr_time - s.timestamp) < 10 {
-			return true
-		}
-	}
-	s.timestamp = curr_time
-	return false
+	userChan       chan string
 }
 
 func (s *UserSession) askAge_01() {
@@ -46,6 +35,7 @@ func (s *UserSession) askAge_01() {
 		s.age_idx = -1
 		msg.Text = start_msg
 		msg.ReplyMarkup = numericInlineKeyboard
+		user_timestamp[s.userID] = 0
 	}
 
 	s.b.bot.Send(msg)
@@ -64,6 +54,7 @@ func (s *UserSession) askIll_02(userData string) {
 	}
 
 	s.b.bot.Send(msg)
+	user_timestamp[s.userID] = 0
 }
 
 func (s *UserSession) writeResult_03(userData string) {
@@ -87,13 +78,23 @@ func (s *UserSession) writeResult_03(userData string) {
 	s.b.bot.Send(msg)
 }
 
+func (s *UserSession) exit() {
+	user_timestamp[s.userID] = time.Now().Unix()
+	delete(user_session, s.userID)
+}
+
 func (s *UserSession) RunSurvey(ch chan string) {
+	defer s.exit()
 	s.askAge_01()
 	for {
 		data := <-ch
-		if s.age_idx == -1 {
+		switch s.age_idx {
+		case -2:
+			s.askAge_01()
+			return
+		case -1:
 			s.askIll_02(data)
-		} else {
+		default:
 			s.writeResult_03(data)
 			return
 		}
