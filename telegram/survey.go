@@ -12,7 +12,6 @@ var repeat_msg = "\nДля повторного показа статистик�
 var start_msg = "Независимый подсчет статистики по COVID-19\nУкажите вашу возрастную группу:"
 
 var user_session = make(map[int64]*UserSession)
-var user_timestamp = make(map[int64]int64)
 
 type UserSession struct {
 	b              *Bot
@@ -35,7 +34,7 @@ func (s *UserSession) askAge_01() {
 		s.age_idx = -1
 		msg.Text = start_msg
 		msg.ReplyMarkup = numericInlineKeyboard
-		user_timestamp[s.userID] = 0
+		s.b.utime.ResetStamp(s.userID)
 	}
 
 	s.b.bot.Send(msg)
@@ -54,7 +53,7 @@ func (s *UserSession) askIll_02(userData string) {
 	}
 
 	s.b.bot.Send(msg)
-	user_timestamp[s.userID] = 0
+	s.b.utime.ResetStamp(s.userID)
 }
 
 func (s *UserSession) writeResult_03(userData string) {
@@ -79,7 +78,7 @@ func (s *UserSession) writeResult_03(userData string) {
 }
 
 func (s *UserSession) exit() {
-	user_timestamp[s.userID] = time.Now().Unix()
+	s.b.utime.SetStamp(s.userID, time.Now().Unix())
 	delete(user_session, s.userID)
 }
 

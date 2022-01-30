@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"log"
-	"time"
 
 	"github.com/zloyboy/gobot/database"
 
@@ -13,22 +12,11 @@ type Bot struct {
 	bot   *tgbotapi.BotAPI
 	dbase *database.Dbase
 	stat  *Static
+	utime *TimeStamp
 }
 
 func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase) *Bot {
-	return &Bot{bot: bot, dbase: db, stat: Stat()}
-}
-
-func (b *Bot) userTimeout(id int64) bool {
-	curr_time := time.Now().Unix()
-	if tstamp, ok := user_timestamp[id]; ok && 0 < tstamp {
-		log.Printf("Timestamp %d, pass %d", tstamp, (curr_time - tstamp))
-		if (curr_time - tstamp) < 10 {
-			return true
-		}
-	}
-	user_timestamp[id] = curr_time
-	return false
+	return &Bot{bot: bot, dbase: db, stat: Stat(), utime: MakeStamp()}
 }
 
 func (b *Bot) Run() {
@@ -40,13 +28,15 @@ func (b *Bot) Run() {
 
 	b.readStatFromDb()
 
+	go b.utime.DeleteTimeouts()
+
 	for update := range updates {
 		if update.Message == nil && update.CallbackQuery == nil { // ignore non-Message updates
 			continue
 		}
 
 		userID := update.SentFrom().ID
-		if b.userTimeout(userID) {
+		if b.utime.UserTimeout(userID) {
 			continue
 		}
 
