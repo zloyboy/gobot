@@ -18,7 +18,7 @@ type UserData struct {
 	education string
 	origin    string
 	vaccine   string
-	haveill   int
+	countIll  int
 }
 
 func MakeUser() UserData {
@@ -28,7 +28,7 @@ func MakeUser() UserData {
 		education: "",
 		origin:    "",
 		vaccine:   "",
-		haveill:   0}
+		countIll:  0}
 }
 
 type UserSession struct {
@@ -62,6 +62,7 @@ func (s *UserSession) startSurvey_00() bool {
 	} else {
 		// new user - start survey
 		msg.Text = start_msg
+		msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 		res = true
 	}
 
@@ -81,20 +82,19 @@ func (s *UserSession) askCountry_00() {
 
 func (s *UserSession) getCountry_01(userData string) bool {
 	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
+	var ok = true
 
 	country := userData
 	switch country {
 	case Russia[1], Ukraine[1], Belarus[1], Kazakh[1]:
 		s.userData.country = country
-		res = true
 	default:
 		msg.Text = error_msg + "страна " + country + " не участвует в опросе"
-		res = false
+		ok = false
 	}
 
 	s.b.bot.Send(msg)
-	return res
+	return ok
 }
 
 func (s *UserSession) askBirth_01() {
@@ -108,19 +108,18 @@ func (s *UserSession) askBirth_01() {
 
 func (s *UserSession) getBirth_02(userData string) bool {
 	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
+	var ok = true
 
 	year, _ := strconv.Atoi(userData)
 	if 1920 < year && year < 2020 {
 		s.userData.birth = year
-		res = true
 	} else {
 		msg.Text = error_msg + userData + " не корректный год"
-		res = false
+		ok = false
 	}
 
 	s.b.bot.Send(msg)
-	return res
+	return ok
 }
 
 func (s *UserSession) askGender_02() {
@@ -135,18 +134,17 @@ func (s *UserSession) askGender_02() {
 
 func (s *UserSession) getGender_03(userData string) bool {
 	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
+	var ok = true
 
 	if userData == Male[1] || userData == Female[1] {
 		s.userData.gender, _ = strconv.Atoi(userData)
-		res = true
 	} else {
 		msg.Text = error_msg + "не корректный пол"
-		res = false
+		ok = false
 	}
 
 	s.b.bot.Send(msg)
-	return res
+	return ok
 }
 
 func (s *UserSession) askEducation_03() {
@@ -161,20 +159,19 @@ func (s *UserSession) askEducation_03() {
 
 func (s *UserSession) getEducation_04(userData string) bool {
 	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
+	var ok = true
 
 	education := userData
 	switch education {
 	case School[1], College[1], University[1]:
 		s.userData.education = education
-		res = true
 	default:
 		msg.Text = error_msg + education + error_ans
-		res = false
+		ok = false
 	}
 
 	s.b.bot.Send(msg)
-	return res
+	return ok
 }
 
 func (s *UserSession) askOrigin_04() {
@@ -189,20 +186,19 @@ func (s *UserSession) askOrigin_04() {
 
 func (s *UserSession) getOrigin_05(userData string) bool {
 	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
+	var ok = true
 
 	origin := userData
 	switch origin {
 	case Nature[1], Human[1], Unknown[1]:
 		s.userData.origin = origin
-		res = true
 	default:
 		msg.Text = error_msg + origin + error_ans
-		res = false
+		ok = false
 	}
 
 	s.b.bot.Send(msg)
-	return res
+	return ok
 }
 
 func (s *UserSession) askVaccine_05() {
@@ -217,20 +213,19 @@ func (s *UserSession) askVaccine_05() {
 
 func (s *UserSession) getVaccine_06(userData string) bool {
 	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
+	var ok = true
 
 	vaccine := userData
 	switch vaccine {
 	case Helpful[1], Useless[1], Dangerous[1], Unknown[1]:
 		s.userData.vaccine = vaccine
-		res = true
 	default:
 		msg.Text = error_msg + vaccine + error_ans
-		res = false
+		ok = false
 	}
 
 	s.b.bot.Send(msg)
-	return res
+	return ok
 }
 
 func (s *UserSession) askHaveIll_06() {
@@ -245,19 +240,43 @@ func (s *UserSession) askHaveIll_06() {
 
 func (s *UserSession) getHaveIll_07(userData string) bool {
 	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
+	var ok = true
 
 	haveill := userData
 	switch haveill {
 	case Yes[1]:
-		s.userData.haveill = 1
-		res = true
+		s.askCountIll_07()
+		s.nextStep()
 	case No[1]:
-		s.userData.haveill = 0
-		res = true
+		s.userData.countIll = 0
 	default:
 		msg.Text = error_msg + haveill + error_ans
-		res = false
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askCountIll_07() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_countill_msg
+	s.nextStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getCountIll_08(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var res bool
+
+	countIll, _ := strconv.Atoi(userData)
+	if 0 < countIll && countIll < 5 {
+		s.userData.countIll = countIll
+		res = true
+	} else {
+		msg.Text = error_msg + userData + error_ans
 	}
 
 	s.b.bot.Send(msg)
@@ -285,6 +304,12 @@ func (s *UserSession) writeResult(userData string) {
 	s.b.bot.Send(msg)
 }
 
+func (s *UserSession) abort() {
+	msg := tgbotapi.NewMessage(s.chatID, abort_msg)
+	msg.ReplyMarkup = startKeyboard
+	s.b.bot.Send(msg)
+}
+
 func (s *UserSession) exit() {
 	s.b.utime.SetStamp(s.userID, time.Now().Unix())
 	delete(user_session, s.userID)
@@ -299,31 +324,48 @@ func (s *UserSession) RunSurvey(ch chan string) {
 		data := <-ch
 		switch s.state {
 		case 1:
-			if s.getCountry_01(data) {
-				s.askBirth_01()
+			if !s.getCountry_01(data) {
+				s.abort()
+				return
 			}
+			s.askBirth_01()
 		case 2:
-			if s.getBirth_02(data) {
-				s.askGender_02()
+			if !s.getBirth_02(data) {
+				s.abort()
+				return
 			}
+			s.askGender_02()
 		case 3:
-			if s.getGender_03(data) {
-				s.askEducation_03()
+			if !s.getGender_03(data) {
+				s.abort()
+				return
 			}
+			s.askEducation_03()
 		case 4:
-			if s.getEducation_04(data) {
-				s.askOrigin_04()
+			if !s.getEducation_04(data) {
+				s.abort()
+				return
 			}
+			s.askOrigin_04()
 		case 5:
-			if s.getOrigin_05(data) {
-				s.askVaccine_05()
+			if !s.getOrigin_05(data) {
+				s.abort()
+				return
 			}
+			s.askVaccine_05()
 		case 6:
-			if s.getVaccine_06(data) {
-				s.askHaveIll_06()
+			if !s.getVaccine_06(data) {
+				s.abort()
+				return
 			}
+			s.askHaveIll_06()
 		case 7:
-			s.getHaveIll_07(data)
+			if !s.getHaveIll_07(data) {
+				s.abort()
+				return
+			}
+		case 8:
+			s.getCountIll_08(data)
 		default:
 			s.writeResult(data)
 			return

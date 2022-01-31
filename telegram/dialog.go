@@ -4,6 +4,7 @@ import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 const error_msg = "Произошла ошибка: "
 const error_ans = " не корректный ответ"
+const abort_msg = "Опрос завершен из-за ошибки. Попробуйте начать сначала, но не ранее чем через 10 секунд"
 
 var Yes = [2]string{"Да", "Yes"}
 var No = [2]string{"Нет", "No"}
@@ -104,5 +105,7 @@ var haveillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardButtonData(No[0], No[1]),
 	),
 )
+
+const ask_countill_msg = "Введите пожалуйста сколько раз вы переболели коронавирусом"
 
 var repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
