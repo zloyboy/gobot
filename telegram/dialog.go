@@ -10,6 +10,15 @@ var Yes = [2]string{"Да", "Yes"}
 var No = [2]string{"Нет", "No"}
 var Unknown = [2]string{"Не знаю", "Unknown"}
 
+var yesnoInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(Yes[0], Yes[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(No[0], No[1]),
+	),
+)
+
 const start_msg = "Этот опрос создан для независимого сбора информации по пандемии коронавируса в РФ и странах СНГ. " +
 	"После прохождения опроса вам будет доступна собранная статистика."
 
@@ -96,16 +105,100 @@ var vaccineInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 )
 
 const ask_haveill_msg = "Считаете ли вы что переболели коронавирусом (возможно не один раз)?"
+const ask_countill_msg = "Введите пожалуйста сколько раз вы переболели коронавирусом"
 
-var haveillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+const ask_yearill_msg = "Введите год когда переболели "
+const year2020 = "2020"
+const year2021 = "2021"
+const year2022 = "2022"
+
+var yearillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Yes[0], Yes[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(No[0], No[1]),
+		tgbotapi.NewInlineKeyboardButtonData(year2020, year2020),
+		tgbotapi.NewInlineKeyboardButtonData(year2021, year2021),
+		tgbotapi.NewInlineKeyboardButtonData(year2022, year2022),
 	),
 )
 
-const ask_countill_msg = "Введите пожалуйста сколько раз вы переболели коронавирусом"
+const ask_monthill_msg = "Введите месяц когда переболели "
+
+var January = [2]string{"Январь", "1"}
+var February = [2]string{"Февраль", "2"}
+var March = [2]string{"Март", "3"}
+var April = [2]string{"Апрель", "4"}
+var May = [2]string{"Май", "5"}
+var June = [2]string{"Июнь", "6"}
+var July = [2]string{"Июль", "7"}
+var August = [2]string{"Август", "8"}
+var September = [2]string{"Сентябрь", "9"}
+var October = [2]string{"Октябрь", "10"}
+var November = [2]string{"Ноябрь", "11"}
+var December = [2]string{"Декабрь", "12"}
+
+var monthillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(January[0], January[1]),
+		tgbotapi.NewInlineKeyboardButtonData(February[0], February[1]),
+		tgbotapi.NewInlineKeyboardButtonData(March[0], March[1]),
+		tgbotapi.NewInlineKeyboardButtonData(April[0], April[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(May[0], May[1]),
+		tgbotapi.NewInlineKeyboardButtonData(June[0], June[1]),
+		tgbotapi.NewInlineKeyboardButtonData(July[0], July[1]),
+		tgbotapi.NewInlineKeyboardButtonData(August[0], August[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(September[0], September[1]),
+		tgbotapi.NewInlineKeyboardButtonData(October[0], October[1]),
+		tgbotapi.NewInlineKeyboardButtonData(November[0], November[1]),
+		tgbotapi.NewInlineKeyboardButtonData(December[0], December[1]),
+	),
+)
+
+const ask_signill_msg = "По каким признакам вы определили тогда, что переболели коронавирусом?"
+
+var Medic = [2]string{"Есть медицинская справка", "medic"}
+var Test = [2]string{"Есть тест с наличием антител", "test"}
+var Symptom = [2]string{"По характерным симптомам", "symptom"}
+
+var signillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(Medic[0], Medic[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(Test[0], Test[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(Symptom[0], Symptom[1]),
+	),
+)
+
+const ask_degreeill_msg = "Насколько тяжело протекала болезнь?"
+
+var HospIvl = [2]string{"Лежал(а) под ИВЛ", "ivl"}
+var Hospital = [2]string{"Лежал(а) в больнице", "hosp"}
+var HomeHard = [2]string{"Лежал(а) дома, тяжело", "hard"}
+var HomeEasy = [2]string{"Лежал(а) дома, легко", "easy"}
+var OnFoot = [2]string{"Перенес(ла) на ногах", "onfoot"}
+var NoSymptom = [2]string{"Перенес(ла) без симптомов", "nosymptom"}
+
+var degreeillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(HospIvl[0], HospIvl[1]),
+		tgbotapi.NewInlineKeyboardButtonData(Hospital[0], Hospital[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(HomeHard[0], HomeHard[1]),
+		tgbotapi.NewInlineKeyboardButtonData(HomeEasy[0], HomeEasy[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(OnFoot[0], OnFoot[1]),
+		tgbotapi.NewInlineKeyboardButtonData(NoSymptom[0], NoSymptom[1]),
+	),
+)
+
+const ask_havevac_msg = "Вы делали вакцинацию от коронавируса?"
+const ask_countvac_msg = "Сколько раз вы вакцинировались?\n(Два укола Спутник-V считаются одним разом)"
 
 var repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"

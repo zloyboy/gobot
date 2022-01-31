@@ -19,6 +19,13 @@ type UserData struct {
 	origin    string
 	vaccine   string
 	countIll  int
+	yearIll   []int
+	monthIll  []int
+	signIll   []string
+	degreeIll []string
+	countVac  int
+	yearVac   []int
+	monthVac  []int
 }
 
 func MakeUser() UserData {
@@ -28,12 +35,21 @@ func MakeUser() UserData {
 		education: "",
 		origin:    "",
 		vaccine:   "",
-		countIll:  0}
+		countIll:  0,
+		yearIll:   nil,
+		monthIll:  nil,
+		signIll:   nil,
+		degreeIll: nil,
+		countVac:  0,
+		yearVac:   nil,
+		monthVac:  nil}
 }
 
 type UserSession struct {
 	b              *Bot
 	state          int
+	subState       int
+	count          int
 	userID, chatID int64
 	userName       string
 	userChan       chan string
@@ -41,11 +57,21 @@ type UserSession struct {
 }
 
 func MakeSession(b *Bot, userID, chatID int64, userName string) *UserSession {
-	return &UserSession{b, survey_default, userID, chatID, userName, make(chan string), MakeUser()}
+	return &UserSession{b, survey_default, 0, 0, userID, chatID, userName, make(chan string), MakeUser()}
 }
 
 func (s *UserSession) nextStep() {
 	s.state++
+	s.b.utime.ResetStamp(s.userID)
+}
+
+func (s *UserSession) resetSubStep() {
+	s.subState = 0
+	s.b.utime.ResetStamp(s.userID)
+}
+
+func (s *UserSession) nextSubStep() {
+	s.subState++
 	s.b.utime.ResetStamp(s.userID)
 }
 
@@ -232,7 +258,7 @@ func (s *UserSession) askHaveIll_06() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
 	msg.Text = ask_haveill_msg
-	msg.ReplyMarkup = haveillInlineKeyboard
+	msg.ReplyMarkup = yesnoInlineKeyboard
 	s.nextStep()
 
 	s.b.bot.Send(msg)
@@ -245,8 +271,7 @@ func (s *UserSession) getHaveIll_07(userData string) bool {
 	haveill := userData
 	switch haveill {
 	case Yes[1]:
-		s.askCountIll_07()
-		s.nextStep()
+		s.userData.countIll = 1
 	case No[1]:
 		s.userData.countIll = 0
 	default:
@@ -269,18 +294,162 @@ func (s *UserSession) askCountIll_07() {
 
 func (s *UserSession) getCountIll_08(userData string) bool {
 	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
+	var ok = true
 
 	countIll, _ := strconv.Atoi(userData)
 	if 0 < countIll && countIll < 5 {
 		s.userData.countIll = countIll
-		res = true
 	} else {
 		msg.Text = error_msg + userData + error_ans
+		ok = false
 	}
 
 	s.b.bot.Send(msg)
-	return res
+	return ok
+}
+
+func (s *UserSession) askYearIll_09() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_yearill_msg + strconv.Itoa(s.count+1) + "й раз"
+	msg.ReplyMarkup = yearillInlineKeyboard
+	s.nextSubStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getYearIll_09(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	yearIll, _ := strconv.Atoi(userData)
+	if 2020 <= yearIll && yearIll <= 2022 {
+		s.userData.yearIll = append(s.userData.yearIll, yearIll)
+	} else {
+		msg.Text = error_msg + userData + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askMonthIll_09() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_monthill_msg + strconv.Itoa(s.count+1) + "й раз"
+	msg.ReplyMarkup = monthillInlineKeyboard
+	s.nextSubStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getMonthIll_09(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	monthIll, _ := strconv.Atoi(userData)
+	if 1 <= monthIll && monthIll <= 12 {
+		s.userData.monthIll = append(s.userData.monthIll, monthIll)
+	} else {
+		msg.Text = error_msg + userData + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askSignIll_09() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_signill_msg
+	msg.ReplyMarkup = signillInlineKeyboard
+	s.nextSubStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getSignIll_09(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	signIll := userData
+	switch signIll {
+	case Medic[1], Test[1], Symptom[1]:
+		s.userData.signIll = append(s.userData.signIll, signIll)
+	default:
+		msg.Text = error_msg + userData + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askDegreeIll_09() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_degreeill_msg
+	msg.ReplyMarkup = degreeillInlineKeyboard
+	s.nextSubStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getDegreeIll_09(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	degreeIll := userData
+	switch degreeIll {
+	case HospIvl[1], Hospital[1], HomeHard[1], HomeEasy[1], OnFoot[1], NoSymptom[1]:
+		s.userData.degreeIll = append(s.userData.degreeIll, degreeIll)
+	default:
+		msg.Text = error_msg + degreeIll + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askHaveVac_09() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_havevac_msg
+	msg.ReplyMarkup = yesnoInlineKeyboard
+	s.nextStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getHaveVac_10(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	haveVac := userData
+	switch haveVac {
+	case Yes[1]:
+		s.userData.countVac = 1
+	case No[1]:
+		s.userData.countVac = 0
+	default:
+		msg.Text = error_msg + haveVac + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askCountVac_10() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_countvac_msg
+	s.nextStep()
+
+	s.b.bot.Send(msg)
 }
 
 func (s *UserSession) writeResult(userData string) {
@@ -364,8 +533,63 @@ func (s *UserSession) RunSurvey(ch chan string) {
 				s.abort()
 				return
 			}
+			if 0 < s.userData.countIll {
+				s.askCountIll_07()
+			} else {
+				s.nextStep()
+				s.nextStep()
+				s.askHaveVac_09()
+			}
 		case 8:
-			s.getCountIll_08(data)
+			if !s.getCountIll_08(data) {
+				s.abort()
+				return
+			}
+			s.count = 0
+			s.resetSubStep()
+			s.askYearIll_09()
+			s.nextStep()
+		case 9:
+			switch s.subState {
+			case 1:
+				if !s.getYearIll_09(data) {
+					s.abort()
+					return
+				}
+				s.askMonthIll_09()
+			case 2:
+				if !s.getMonthIll_09(data) {
+					s.abort()
+					return
+				}
+				s.askSignIll_09()
+			case 3:
+				if !s.getSignIll_09(data) {
+					s.abort()
+					return
+				}
+				s.askDegreeIll_09()
+			case 4:
+				if !s.getDegreeIll_09(data) {
+					s.abort()
+					return
+				}
+				s.resetSubStep()
+				s.count++
+				if s.count < s.userData.countIll {
+					s.askYearIll_09()
+				} else {
+					s.askHaveVac_09()
+				}
+			}
+		case 10:
+			if !s.getHaveVac_10(data) {
+				s.abort()
+				return
+			}
+			if 0 < s.userData.countVac {
+				s.askCountVac_10()
+			}
 		default:
 			s.writeResult(data)
 			return
