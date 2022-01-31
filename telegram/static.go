@@ -16,16 +16,6 @@ func (b *Bot) readStatFromDb() {
 
 var ages = [6]string{"до 20", "20-29", "30-39", "40-49", "50-59", "60 ++"}
 var age_mid = [6]int{15, 25, 35, 45, 55, 65}
-var age_idx = map[string]int{ages[0]: 0, ages[1]: 1, ages[2]: 2, ages[3]: 3, ages[4]: 4, ages[5]: 5}
-
-func inAges(age string) bool {
-	switch age {
-	case
-		ages[0], ages[1], ages[2], ages[3], ages[4], ages[5]:
-		return true
-	}
-	return false
-}
 
 type Static struct {
 	cntAll, cntIll, cntNo int

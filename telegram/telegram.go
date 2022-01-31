@@ -55,7 +55,7 @@ func (b *Bot) Run() {
 			userName := update.SentFrom().FirstName
 			log.Printf("Start user %d, data %s", userID, userData)
 
-			user_session[userID] = &UserSession{b, userID, chatID, userName, -2, make(chan string)}
+			user_session[userID] = MakeSession(b, userID, chatID, userName)
 			go user_session[userID].RunSurvey(user_session[userID].userChan)
 		}
 	}
