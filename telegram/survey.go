@@ -26,6 +26,8 @@ type UserData struct {
 	countVac  int
 	yearVac   []int
 	monthVac  []int
+	kindVac   []string
+	effectVac []string
 }
 
 func MakeUser() UserData {
@@ -42,7 +44,9 @@ func MakeUser() UserData {
 		degreeIll: nil,
 		countVac:  0,
 		yearVac:   nil,
-		monthVac:  nil}
+		monthVac:  nil,
+		kindVac:   nil,
+		effectVac: nil}
 }
 
 type UserSession struct {
@@ -312,7 +316,7 @@ func (s *UserSession) askYearIll_09() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
 	msg.Text = ask_yearill_msg + strconv.Itoa(s.count+1) + "й раз"
-	msg.ReplyMarkup = yearillInlineKeyboard
+	msg.ReplyMarkup = yearInlineKeyboard
 	s.nextSubStep()
 
 	s.b.bot.Send(msg)
@@ -338,7 +342,7 @@ func (s *UserSession) askMonthIll_09() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
 	msg.Text = ask_monthill_msg + strconv.Itoa(s.count+1) + "й раз"
-	msg.ReplyMarkup = monthillInlineKeyboard
+	msg.ReplyMarkup = monthInlineKeyboard
 	s.nextSubStep()
 
 	s.b.bot.Send(msg)
@@ -450,6 +454,128 @@ func (s *UserSession) askCountVac_10() {
 	s.nextStep()
 
 	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getCountVac_11(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	countVac, _ := strconv.Atoi(userData)
+	if 0 < countVac && countVac < 5 {
+		s.userData.countVac = countVac
+	} else {
+		msg.Text = error_msg + userData + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askYearVac_12() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_yearvac_msg + strconv.Itoa(s.count+1) + "й раз"
+	msg.ReplyMarkup = yearInlineKeyboard
+	s.nextSubStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getYearVac_12(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	yearVac, _ := strconv.Atoi(userData)
+	if 2020 <= yearVac && yearVac <= 2022 {
+		s.userData.yearVac = append(s.userData.yearVac, yearVac)
+	} else {
+		msg.Text = error_msg + userData + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askMonthVac_12() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_monthvac_msg + strconv.Itoa(s.count+1) + "й раз"
+	msg.ReplyMarkup = monthInlineKeyboard
+	s.nextSubStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getMonthVac_12(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	monthVac, _ := strconv.Atoi(userData)
+	if 1 <= monthVac && monthVac <= 12 {
+		s.userData.monthVac = append(s.userData.monthVac, monthVac)
+	} else {
+		msg.Text = error_msg + userData + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askKindVac_12() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_kindvac_msg
+	msg.ReplyMarkup = kindvacInlineKeyboard
+	s.nextSubStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getKindVac_12(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	kindVac := userData
+	switch kindVac {
+	case SputnikV[1], SputnikL[1], EpiVac[1], Kovivak[1]:
+		s.userData.kindVac = append(s.userData.kindVac, kindVac)
+	default:
+		msg.Text = error_msg + userData + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
+}
+
+func (s *UserSession) askEffectVac_12() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	msg.Text = ask_effectvac_msg
+	msg.ReplyMarkup = effectvacInlineKeyboard
+	s.nextSubStep()
+
+	s.b.bot.Send(msg)
+}
+
+func (s *UserSession) getEffectVac_12(userData string) bool {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+	var ok = true
+
+	effectVac := userData
+	switch effectVac {
+	case HardEffect[1], MediumEffect[1], EasyEffect[1]:
+		s.userData.effectVac = append(s.userData.effectVac, effectVac)
+	default:
+		msg.Text = error_msg + userData + error_ans
+		ok = false
+	}
+
+	s.b.bot.Send(msg)
+	return ok
 }
 
 func (s *UserSession) writeResult(userData string) {
@@ -589,6 +715,46 @@ func (s *UserSession) RunSurvey(ch chan string) {
 			}
 			if 0 < s.userData.countVac {
 				s.askCountVac_10()
+			}
+		case 11:
+			if !s.getCountVac_11(data) {
+				s.abort()
+				return
+			}
+			s.count = 0
+			s.resetSubStep()
+			s.askYearVac_12()
+			s.nextStep()
+		case 12:
+			switch s.subState {
+			case 1:
+				if !s.getYearVac_12(data) {
+					s.abort()
+					return
+				}
+				s.askMonthVac_12()
+			case 2:
+				if !s.getMonthVac_12(data) {
+					s.abort()
+					return
+				}
+				s.askKindVac_12()
+			case 3:
+				if !s.getKindVac_12(data) {
+					s.abort()
+					return
+				}
+				s.askEffectVac_12()
+			case 4:
+				if !s.getEffectVac_12(data) {
+					s.abort()
+					return
+				}
+				s.resetSubStep()
+				s.count++
+				if s.count < s.userData.countIll {
+					s.askYearVac_12()
+				}
 			}
 		default:
 			s.writeResult(data)

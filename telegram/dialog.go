@@ -19,6 +19,52 @@ var yesnoInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 	),
 )
 
+const year2020 = "2020"
+const year2021 = "2021"
+const year2022 = "2022"
+
+var yearInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(year2020, year2020),
+		tgbotapi.NewInlineKeyboardButtonData(year2021, year2021),
+		tgbotapi.NewInlineKeyboardButtonData(year2022, year2022),
+	),
+)
+
+var January = [2]string{"Январь", "1"}
+var February = [2]string{"Февраль", "2"}
+var March = [2]string{"Март", "3"}
+var April = [2]string{"Апрель", "4"}
+var May = [2]string{"Май", "5"}
+var June = [2]string{"Июнь", "6"}
+var July = [2]string{"Июль", "7"}
+var August = [2]string{"Август", "8"}
+var September = [2]string{"Сентябрь", "9"}
+var October = [2]string{"Октябрь", "10"}
+var November = [2]string{"Ноябрь", "11"}
+var December = [2]string{"Декабрь", "12"}
+
+var monthInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(January[0], January[1]),
+		tgbotapi.NewInlineKeyboardButtonData(February[0], February[1]),
+		tgbotapi.NewInlineKeyboardButtonData(March[0], March[1]),
+		tgbotapi.NewInlineKeyboardButtonData(April[0], April[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(May[0], May[1]),
+		tgbotapi.NewInlineKeyboardButtonData(June[0], June[1]),
+		tgbotapi.NewInlineKeyboardButtonData(July[0], July[1]),
+		tgbotapi.NewInlineKeyboardButtonData(August[0], August[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(September[0], September[1]),
+		tgbotapi.NewInlineKeyboardButtonData(October[0], October[1]),
+		tgbotapi.NewInlineKeyboardButtonData(November[0], November[1]),
+		tgbotapi.NewInlineKeyboardButtonData(December[0], December[1]),
+	),
+)
+
 const start_msg = "Этот опрос создан для независимого сбора информации по пандемии коронавируса в РФ и странах СНГ. " +
 	"После прохождения опроса вам будет доступна собранная статистика."
 
@@ -106,56 +152,8 @@ var vaccineInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 
 const ask_haveill_msg = "Считаете ли вы что переболели коронавирусом (возможно не один раз)?"
 const ask_countill_msg = "Введите пожалуйста сколько раз вы переболели коронавирусом"
-
 const ask_yearill_msg = "Введите год когда переболели "
-const year2020 = "2020"
-const year2021 = "2021"
-const year2022 = "2022"
-
-var yearillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(year2020, year2020),
-		tgbotapi.NewInlineKeyboardButtonData(year2021, year2021),
-		tgbotapi.NewInlineKeyboardButtonData(year2022, year2022),
-	),
-)
-
 const ask_monthill_msg = "Введите месяц когда переболели "
-
-var January = [2]string{"Январь", "1"}
-var February = [2]string{"Февраль", "2"}
-var March = [2]string{"Март", "3"}
-var April = [2]string{"Апрель", "4"}
-var May = [2]string{"Май", "5"}
-var June = [2]string{"Июнь", "6"}
-var July = [2]string{"Июль", "7"}
-var August = [2]string{"Август", "8"}
-var September = [2]string{"Сентябрь", "9"}
-var October = [2]string{"Октябрь", "10"}
-var November = [2]string{"Ноябрь", "11"}
-var December = [2]string{"Декабрь", "12"}
-
-var monthillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(January[0], January[1]),
-		tgbotapi.NewInlineKeyboardButtonData(February[0], February[1]),
-		tgbotapi.NewInlineKeyboardButtonData(March[0], March[1]),
-		tgbotapi.NewInlineKeyboardButtonData(April[0], April[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(May[0], May[1]),
-		tgbotapi.NewInlineKeyboardButtonData(June[0], June[1]),
-		tgbotapi.NewInlineKeyboardButtonData(July[0], July[1]),
-		tgbotapi.NewInlineKeyboardButtonData(August[0], August[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(September[0], September[1]),
-		tgbotapi.NewInlineKeyboardButtonData(October[0], October[1]),
-		tgbotapi.NewInlineKeyboardButtonData(November[0], November[1]),
-		tgbotapi.NewInlineKeyboardButtonData(December[0], December[1]),
-	),
-)
-
 const ask_signill_msg = "По каким признакам вы определили тогда, что переболели коронавирусом?"
 
 var Medic = [2]string{"Есть медицинская справка", "medic"}
@@ -200,5 +198,42 @@ var degreeillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 
 const ask_havevac_msg = "Вы делали вакцинацию от коронавируса?"
 const ask_countvac_msg = "Сколько раз вы вакцинировались?\n(Два укола Спутник-V считаются одним разом)"
+const ask_yearvac_msg = "Введите год когда вакцинировались "
+const ask_monthvac_msg = "Введите месяц когда вакцинировались "
+const ask_kindvac_msg = "Какую вакцину вводили?"
+
+var SputnikV = [2]string{"Спутник-V (два укола)", "sputnik-v"}
+var SputnikL = [2]string{"Спутник-Лайт (один укол)", "sputnik-l"}
+var EpiVac = [2]string{"ЭпиВакКорона", "epivac"}
+var Kovivak = [2]string{"КовиВак", "sputnik-v"}
+
+var kindvacInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(SputnikV[0], SputnikV[1]),
+		tgbotapi.NewInlineKeyboardButtonData(SputnikL[0], SputnikL[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(EpiVac[0], EpiVac[1]),
+		tgbotapi.NewInlineKeyboardButtonData(Kovivak[0], Kovivak[1]),
+	),
+)
+
+const ask_effectvac_msg = "Насколько сильными были побочные эффекты после вакцины?"
+
+var HardEffect = [2]string{"Сильные: температура, головная боль и т.п.", "hard"}
+var MediumEffect = [2]string{"Средние: боль в руке, аллергия и т.п.", "medium"}
+var EasyEffect = [2]string{"Слабые или никаких проявлений", "easy"}
+
+var effectvacInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(HardEffect[0], HardEffect[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(MediumEffect[0], MediumEffect[1]),
+	),
+	tgbotapi.NewInlineKeyboardRow(
+		tgbotapi.NewInlineKeyboardButtonData(EasyEffect[0], EasyEffect[1]),
+	),
+)
 
 var repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
