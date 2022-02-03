@@ -1,10 +1,22 @@
 package telegram
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	"strconv"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 const error_msg = "Произошла ошибка: "
 const error_ans = " не корректный ответ"
 const abort_msg = "Опрос завершен из-за ошибки. Попробуйте начать сначала, но не ранее чем через 10 секунд"
+
+func nTimes(time, count int) string {
+	if 1 < count {
+		return strconv.Itoa(time) + "й раз"
+	} else {
+		return ""
+	}
+}
 
 var Yes = [2]string{"Да", "Yes"}
 var No = [2]string{"Нет", "No"}

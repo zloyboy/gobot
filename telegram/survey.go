@@ -86,7 +86,7 @@ func (s *UserSession) startSurvey() bool {
 	uname, err := s.b.dbase.CheckIdName(s.userID)
 	if err == nil {
 		// exist user - send statistic
-		msg.Text = s.b.stat.MakeStatic() + "\n---------------\nВы уже приняли участие в подсчете под именем " + uname + repeat_msg
+		msg.Text = s.b.stat.MakeStatic() + "\nВы уже приняли участие в подсчете под именем " + uname + repeat_msg
 		msg.ReplyMarkup = startKeyboard
 		res = false
 	} else {
@@ -123,9 +123,9 @@ func (s *UserSession) sendRequest() bool {
 	case 3:
 		s.sendQuestion(ask_education_msg, educationInlineKeyboard)
 	case 4:
-		s.sendQuestion(ask_origin_msg, originInlineKeyboard)
-	case 5:
 		s.sendQuestion(ask_vaccine_msg, vaccineInlineKeyboard)
+	case 5:
+		s.sendQuestion(ask_origin_msg, originInlineKeyboard)
 	case 6:
 		s.sendQuestion(ask_haveill_msg, yesnoInlineKeyboard)
 	case 7:
@@ -139,12 +139,12 @@ func (s *UserSession) sendRequest() bool {
 	case 8:
 		s.count = 0
 		s.resetSubStep()
-		s.sendSubQuestion(ask_yearill_msg+strconv.Itoa(s.count+1)+"й раз", yearInlineKeyboard)
+		s.sendSubQuestion(ask_yearill_msg+nTimes(s.count+1, s.userData.countIll), yearInlineKeyboard)
 		s.nextStep()
 	case 9:
 		switch s.subState {
 		case 1:
-			s.sendSubQuestion(ask_monthill_msg+strconv.Itoa(s.count+1)+"й раз", monthInlineKeyboard)
+			s.sendSubQuestion(ask_monthill_msg+nTimes(s.count+1, s.userData.countIll), monthInlineKeyboard)
 		case 2:
 			s.sendSubQuestion(ask_signill_msg, signillInlineKeyboard)
 		case 3:
@@ -153,7 +153,7 @@ func (s *UserSession) sendRequest() bool {
 			s.resetSubStep()
 			s.count++
 			if s.count < s.userData.countIll {
-				s.sendSubQuestion(ask_yearill_msg+strconv.Itoa(s.count+1)+"й раз", yearInlineKeyboard)
+				s.sendSubQuestion(ask_yearill_msg+nTimes(s.count+1, s.userData.countIll), yearInlineKeyboard)
 			} else {
 				s.sendQuestion(ask_havevac_msg, yesnoInlineKeyboard)
 			}
@@ -167,12 +167,12 @@ func (s *UserSession) sendRequest() bool {
 	case 11:
 		s.count = 0
 		s.resetSubStep()
-		s.sendSubQuestion(ask_yearvac_msg+strconv.Itoa(s.count+1)+"й раз", yearInlineKeyboard)
+		s.sendSubQuestion(ask_yearvac_msg+nTimes(s.count+1, s.userData.countVac), yearInlineKeyboard)
 		s.nextStep()
 	case 12:
 		switch s.subState {
 		case 1:
-			s.sendSubQuestion(ask_monthvac_msg+strconv.Itoa(s.count+1)+"й раз", monthInlineKeyboard)
+			s.sendSubQuestion(ask_monthvac_msg+nTimes(s.count+1, s.userData.countVac), monthInlineKeyboard)
 		case 2:
 			s.sendSubQuestion(ask_kindvac_msg, kindvacInlineKeyboard)
 		case 3:
@@ -181,7 +181,7 @@ func (s *UserSession) sendRequest() bool {
 			s.resetSubStep()
 			s.count++
 			if s.count < s.userData.countVac {
-				s.sendSubQuestion(ask_yearvac_msg+strconv.Itoa(s.count+1)+"й раз", yearInlineKeyboard)
+				s.sendSubQuestion(ask_yearvac_msg+nTimes(s.count+1, s.userData.countVac), yearInlineKeyboard)
 			} else {
 				return false
 			}
@@ -230,21 +230,21 @@ func (s *UserSession) getAnswer(userData string) bool {
 			ok = false
 		}
 	case 5:
-		origin := userData
-		switch origin {
-		case Nature[1], Human[1], Unknown[1]:
-			s.userData.origin = origin
-		default:
-			msg.Text = error_msg + origin + error_ans
-			ok = false
-		}
-	case 6:
 		vaccine := userData
 		switch vaccine {
 		case Helpful[1], Useless[1], Dangerous[1], Unknown[1]:
 			s.userData.vaccine = vaccine
 		default:
 			msg.Text = error_msg + vaccine + error_ans
+			ok = false
+		}
+	case 6:
+		origin := userData
+		switch origin {
+		case Nature[1], Human[1], Unknown[1]:
+			s.userData.origin = origin
+		default:
+			msg.Text = error_msg + origin + error_ans
 			ok = false
 		}
 	case 7:
@@ -368,20 +368,23 @@ func (s *UserSession) getAnswer(userData string) bool {
 func (s *UserSession) writeResult() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
-	//ill, _ := strconv.Atoi(userData)
-	if s.b.dbase.NewId(s.userID) {
-		/*aver_age := age_mid[s.age_idx]
-		log.Printf("insert id %d, name %s, age %d, ill %d", s.userID, s.userName, aver_age, ill)
-		s.b.dbase.Insert(s.userID,
-			time.Now().Local().Format("2006-01-02 15:04:05"),
-			s.userName,
-			aver_age,
-			ill)
-		s.b.stat.RefreshStatic(s.age_idx, ill)*/
-		msg.Text = s.b.stat.MakeStatic()
-	} else {
-		msg.Text = "Произошла ошибка: повторный ввод"
-	}
+	log.Printf("insert id %d, name %s, country %s, birth %d, gender %d, education %s, vaccine %s, origin %s, countIll %d, countVac %d",
+		s.userID, s.userName, s.userData.country, s.userData.birth, s.userData.gender, s.userData.education, s.userData.vaccine,
+		s.userData.origin, s.userData.countIll, s.userData.countVac)
+	s.b.dbase.Insert(s.userID,
+		time.Now().Local().Format("2006-01-02 15:04:05"),
+		s.userName,
+		s.userData.country,
+		s.userData.birth,
+		s.userData.gender,
+		s.userData.education,
+		s.userData.vaccine,
+		s.userData.origin,
+		s.userData.countIll,
+		s.userData.countVac)
+	s.b.stat.RefreshStatic(s.userData.countIll)
+	msg.Text = s.b.stat.MakeStatic() + repeat_msg
+	msg.ReplyMarkup = startKeyboard
 
 	s.b.bot.Send(msg)
 }
@@ -402,16 +405,16 @@ func (s *UserSession) RunSurvey(ch chan string) {
 	defer s.exit()
 	if s.startSurvey() {
 		s.sendQuestion(ask_country_msg, countryInlineKeyboard)
-	}
-	for {
-		data := <-ch
-		if !s.getAnswer(data) {
-			s.abort()
-			return
+		for {
+			data := <-ch
+			if !s.getAnswer(data) {
+				s.abort()
+				return
+			}
+			if !s.sendRequest() {
+				break
+			}
 		}
-		if !s.sendRequest() {
-			break
-		}
+		s.writeResult()
 	}
-	s.writeResult()
 }
