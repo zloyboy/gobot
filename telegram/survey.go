@@ -248,21 +248,19 @@ func (s *UserSession) getAnswer(userData string) bool {
 				ok = false
 			}
 		case 3:
-			signIll := userData
-			switch signIll {
-			case Medic[1], Test[1], Symptom[1]:
+			signIll, _ := strconv.Atoi(userData)
+			if signIll < 3 {
 				s.userIll.Sign = signIll
-			default:
+			} else {
 				msg.Text = error_msg + userData + error_ans
 				ok = false
 			}
 		case 4:
-			degreeIll := userData
-			switch degreeIll {
-			case HospIvl[1], Hospital[1], HomeHard[1], HomeEasy[1], OnFoot[1], NoSymptom[1]:
+			degreeIll, _ := strconv.Atoi(userData)
+			if degreeIll < 6 {
 				s.userIll.Degree = degreeIll
-			default:
-				msg.Text = error_msg + degreeIll + error_ans
+			} else {
+				msg.Text = error_msg + error_ans
 				ok = false
 			}
 		}

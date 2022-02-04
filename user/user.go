@@ -3,16 +3,16 @@ package user
 type UserIll struct {
 	Year   int
 	Month  int
-	Sign   string
-	Degree string
+	Sign   int
+	Degree int
 }
 
 func MakeIll() UserIll {
 	return UserIll{
 		Year:   0,
 		Month:  0,
-		Sign:   "",
-		Degree: ""}
+		Sign:   -1,
+		Degree: -1}
 }
 
 type UserVac struct {

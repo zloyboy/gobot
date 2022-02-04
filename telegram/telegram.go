@@ -29,7 +29,9 @@ func (b *Bot) Run() {
 	if !b.readCountryFromDb() ||
 		!b.readEducationFromDb() ||
 		!b.readVaccineFromDb() ||
-		!b.readOriginFromDb() {
+		!b.readOriginFromDb() ||
+		!b.readIllnessSignFromDb() ||
+		!b.readIllnessDegreeFromDb() {
 		return
 	}
 	b.readStatFromDb()

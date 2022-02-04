@@ -18,20 +18,20 @@ create index if not exists name_index on user (name);
 create table if not exists userIllness(
     id integer primary key,
     created datetime,
-    teleId integer,
-    year integer,
-    month integer,
-    sign string,
-    degree string,
+    teleId integer not null,
+    year integer not null,
+    month integer not null,
+    sign integer not null,
+    degree integer not null,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
 
 create table if not exists userVaccine(
     id integer primary key,
     created datetime,
-    teleId integer,
-    year integer,
-    month integer,
+    teleId integer not null,
+    year integer not null,
+    month integer not null,
     kind string,
     effect string,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
@@ -64,3 +64,20 @@ create table if not exists userOriginOpinion(
     FOREIGN KEY(id) REFERENCES user(originOpinion)
 );
 insert into userOriginOpinion (rus) values ("Природа"), ("Люди");
+
+create table if not exists illnessSign(
+    id integer primary key,
+    rus string,
+    FOREIGN KEY(id) REFERENCES userIllness(sign)
+);
+insert into illnessSign (rus) values ("Есть медицинская справка"), ("Есть тест с наличием антител"), ("По характерным симптомам");
+
+create table if not exists illnessDegree(
+    id integer primary key,
+    rus string,
+    FOREIGN KEY(id) REFERENCES userIllness(degree)
+);
+insert into illnessDegree (rus) values
+    ("Лежал(а) под ИВЛ"), ("Лежал(а) в больнице"),
+    ("Лежал(а) дома, тяжело"), ("Лежал(а) дома, средне"),
+    ("Перенес(ла) на ногах"), ("Перенес(ла) без симптомов");

@@ -194,45 +194,54 @@ const ask_yearill_msg = "Введите год когда переболели "
 const ask_monthill_msg = "Введите месяц когда переболели "
 const ask_signill_msg = "По каким признакам вы определили тогда, что переболели коронавирусом?"
 
-var Medic = [2]string{"Есть медицинская справка", "medic"}
-var Test = [2]string{"Есть тест с наличием антител", "test"}
-var Symptom = [2]string{"По характерным симптомам", "symptom"}
+var signillInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
-var signillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Medic[0], Medic[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Test[0], Test[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Symptom[0], Symptom[1]),
-	),
-)
+func (b *Bot) readIllnessSignFromDb() bool {
+	sign := b.dbase.ReadCaption("illnessSign")
+	if 3 <= len(sign) {
+		signillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(sign[0][0], sign[0][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(sign[1][0], sign[1][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(sign[2][0], sign[2][1]),
+			),
+		)
+		return true
+	}
+	log.Print("Couldn't read illness signs")
+	return false
+}
 
 const ask_degreeill_msg = "Насколько тяжело протекала болезнь?"
 
-var HospIvl = [2]string{"Лежал(а) под ИВЛ", "ivl"}
-var Hospital = [2]string{"Лежал(а) в больнице", "hosp"}
-var HomeHard = [2]string{"Лежал(а) дома, тяжело", "hard"}
-var HomeEasy = [2]string{"Лежал(а) дома, легко", "easy"}
-var OnFoot = [2]string{"Перенес(ла) на ногах", "onfoot"}
-var NoSymptom = [2]string{"Перенес(ла) без симптомов", "nosymptom"}
+var degreeillInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
-var degreeillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(HospIvl[0], HospIvl[1]),
-		tgbotapi.NewInlineKeyboardButtonData(Hospital[0], Hospital[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(HomeHard[0], HomeHard[1]),
-		tgbotapi.NewInlineKeyboardButtonData(HomeEasy[0], HomeEasy[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(OnFoot[0], OnFoot[1]),
-		tgbotapi.NewInlineKeyboardButtonData(NoSymptom[0], NoSymptom[1]),
-	),
-)
+func (b *Bot) readIllnessDegreeFromDb() bool {
+	degree := b.dbase.ReadCaption("illnessDegree")
+	if 6 <= len(degree) {
+		degreeillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(degree[0][0], degree[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(degree[1][0], degree[1][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(degree[2][0], degree[2][1]),
+				tgbotapi.NewInlineKeyboardButtonData(degree[3][0], degree[3][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(degree[4][0], degree[4][1]),
+				tgbotapi.NewInlineKeyboardButtonData(degree[5][0], degree[5][1]),
+			),
+		)
+		return true
+	}
+	log.Print("Couldn't read illness degrees")
+	return false
+}
 
 const ask_havevac_msg = "Вы делали вакцинацию от коронавируса?"
 const ask_countvac_msg = "Сколько раз вы вакцинировались?\n(Два укола Спутник-V считаются одним разом)"
