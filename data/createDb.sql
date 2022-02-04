@@ -32,8 +32,8 @@ create table if not exists userVaccine(
     teleId integer not null,
     year integer not null,
     month integer not null,
-    kind string,
-    effect string,
+    kind integer not null,
+    effect integer not null,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
 
@@ -81,3 +81,20 @@ insert into illnessDegree (rus) values
     ("Лежал(а) под ИВЛ"), ("Лежал(а) в больнице"),
     ("Лежал(а) дома, тяжело"), ("Лежал(а) дома, средне"),
     ("Перенес(ла) на ногах"), ("Перенес(ла) без симптомов");
+
+create table if not exists vaccineKind(
+    id integer primary key,
+    rus string,
+    FOREIGN KEY(id) REFERENCES userVaccine(kind)
+);
+insert into vaccineKind (rus) values ("Спутник-V (два укола)"), ("Спутник-Лайт (один укол)"), ("ЭпиВакКорона"), ("КовиВак");
+
+create table if not exists vaccineEffect(
+    id integer primary key,
+    rus string,
+    FOREIGN KEY(id) REFERENCES userVaccine(effect)
+);
+insert into vaccineEffect (rus) values
+    ("Сильные: температура, головная боль и т.п."),
+    ("Средние: боль в руке, аллергия и т.п."),
+    ("Слабые или никаких проявлений");

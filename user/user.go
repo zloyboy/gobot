@@ -18,16 +18,16 @@ func MakeIll() UserIll {
 type UserVac struct {
 	Year   int
 	Month  int
-	Kind   string
-	Effect string
+	Kind   int
+	Effect int
 }
 
 func MakeVac() UserVac {
 	return UserVac{
 		Year:   0,
 		Month:  0,
-		Kind:   "",
-		Effect: ""}
+		Kind:   -1,
+		Effect: -1}
 }
 
 type UserData struct {

@@ -302,21 +302,19 @@ func (s *UserSession) getAnswer(userData string) bool {
 				ok = false
 			}
 		case 3:
-			kindVac := userData
-			switch kindVac {
-			case SputnikV[1], SputnikL[1], EpiVac[1], Kovivak[1]:
+			kindVac, _ := strconv.Atoi(userData)
+			if kindVac < 4 {
 				s.userVac.Kind = kindVac
-			default:
-				msg.Text = error_msg + userData + error_ans
+			} else {
+				msg.Text = error_msg + error_ans
 				ok = false
 			}
 		case 4:
-			effectVac := userData
-			switch effectVac {
-			case HardEffect[1], MediumEffect[1], EasyEffect[1]:
+			effectVac, _ := strconv.Atoi(userData)
+			if effectVac < 3 {
 				s.userVac.Effect = effectVac
-			default:
-				msg.Text = error_msg + userData + error_ans
+			} else {
+				msg.Text = error_msg + error_ans
 				ok = false
 			}
 		}

@@ -31,7 +31,9 @@ func (b *Bot) Run() {
 		!b.readVaccineFromDb() ||
 		!b.readOriginFromDb() ||
 		!b.readIllnessSignFromDb() ||
-		!b.readIllnessDegreeFromDb() {
+		!b.readIllnessDegreeFromDb() ||
+		!b.readVaccineKindFromDb() ||
+		!b.readVaccineEffectFromDb() {
 		return
 	}
 	b.readStatFromDb()

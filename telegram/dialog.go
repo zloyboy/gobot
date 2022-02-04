@@ -249,38 +249,49 @@ const ask_yearvac_msg = "Введите год когда вакцинирова
 const ask_monthvac_msg = "Введите месяц когда вакцинировались "
 const ask_kindvac_msg = "Какую вакцину вводили?"
 
-var SputnikV = [2]string{"Спутник-V (два укола)", "sputnik-v"}
-var SputnikL = [2]string{"Спутник-Лайт (один укол)", "sputnik-l"}
-var EpiVac = [2]string{"ЭпиВакКорона", "epivac"}
-var Kovivak = [2]string{"КовиВак", "sputnik-v"}
+var kindvacInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
-var kindvacInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(SputnikV[0], SputnikV[1]),
-		tgbotapi.NewInlineKeyboardButtonData(SputnikL[0], SputnikL[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(EpiVac[0], EpiVac[1]),
-		tgbotapi.NewInlineKeyboardButtonData(Kovivak[0], Kovivak[1]),
-	),
-)
+func (b *Bot) readVaccineKindFromDb() bool {
+	kind := b.dbase.ReadCaption("vaccineKind")
+	if 4 <= len(kind) {
+		kindvacInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(kind[0][0], kind[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(kind[1][0], kind[1][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(kind[2][0], kind[2][1]),
+				tgbotapi.NewInlineKeyboardButtonData(kind[3][0], kind[3][1]),
+			),
+		)
+		return true
+	}
+	log.Print("Couldn't read vaccine kind")
+	return false
+}
 
 const ask_effectvac_msg = "Насколько сильными были побочные эффекты после вакцины?"
 
-var HardEffect = [2]string{"Сильные: температура, головная боль и т.п.", "hard"}
-var MediumEffect = [2]string{"Средние: боль в руке, аллергия и т.п.", "medium"}
-var EasyEffect = [2]string{"Слабые или никаких проявлений", "easy"}
+var effectvacInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
-var effectvacInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(HardEffect[0], HardEffect[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(MediumEffect[0], MediumEffect[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(EasyEffect[0], EasyEffect[1]),
-	),
-)
+func (b *Bot) readVaccineEffectFromDb() bool {
+	effect := b.dbase.ReadCaption("vaccineEffect")
+	if 3 <= len(effect) {
+		effectvacInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(effect[0][0], effect[0][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(effect[1][0], effect[1][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(effect[2][0], effect[2][1]),
+			),
+		)
+		return true
+	}
+	log.Print("Couldn't read vaccine effect")
+	return false
+}
 
 var repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
