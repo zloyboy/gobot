@@ -7,8 +7,8 @@ create table if not exists user(
     birth integer not null,
     gender integer not null,
     education integer not null,
-    vaccine varchar(255),
-    origin varchar(255),
+    vaccineOpinion integer not null,
+    originOpinion integer not null,
     countIll integer not null,
     countVac integer not null
 );
@@ -37,16 +37,30 @@ create table if not exists userVaccine(
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
 
-create table if not exists country(
+create table if not exists userCountry(
     id integer primary key,
     rus string,
     FOREIGN KEY(id) REFERENCES user(country)
 );
-insert into country (rus) values ("Россия"), ("Украина"), ("Беларусь"), ("Казахстан");
+insert into userCountry (rus) values ("Россия"), ("Украина"), ("Беларусь"), ("Казахстан");
 
-create table if not exists education(
+create table if not exists userEducation(
     id integer primary key,
     rus string,
     FOREIGN KEY(id) REFERENCES user(education)
 );
-insert into education (rus) values ("Среднее"), ("Колледж"), ("Университет");
+insert into userEducation (rus) values ("Среднее"), ("Колледж"), ("Университет");
+
+create table if not exists userVaccineOpinion(
+    id integer primary key,
+    rus string,
+    FOREIGN KEY(id) REFERENCES user(vaccineOpinion)
+);
+insert into userVaccineOpinion (rus) values ("Помогают"), ("Бесполезны"), ("Опасны");
+
+create table if not exists userOriginOpinion(
+    id integer primary key,
+    rus string,
+    FOREIGN KEY(id) REFERENCES user(originOpinion)
+);
+insert into userOriginOpinion (rus) values ("Природа"), ("Люди");

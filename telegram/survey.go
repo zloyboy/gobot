@@ -188,28 +188,26 @@ func (s *UserSession) getAnswer(userData string) bool {
 		}
 	case 4:
 		education, _ := strconv.Atoi(userData)
-		if education < 4 {
+		if education < 3 {
 			s.userData.Education = education
 		} else {
 			msg.Text = error_msg + error_ans
 			ok = false
 		}
 	case 5:
-		vaccine := userData
-		switch vaccine {
-		case Helpful[1], Useless[1], Dangerous[1], Unknown[1]:
+		vaccine, _ := strconv.Atoi(userData)
+		if vaccine < 3 {
 			s.userData.Vaccine = vaccine
-		default:
-			msg.Text = error_msg + vaccine + error_ans
+		} else {
+			msg.Text = error_msg + error_ans
 			ok = false
 		}
 	case 6:
-		origin := userData
-		switch origin {
-		case Nature[1], Human[1], Unknown[1]:
+		origin, _ := strconv.Atoi(userData)
+		if origin < 2 {
 			s.userData.Origin = origin
-		default:
-			msg.Text = error_msg + origin + error_ans
+		} else {
+			msg.Text = error_msg + error_ans
 			ok = false
 		}
 	case 7:
@@ -333,7 +331,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 func (s *UserSession) writeResult() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
-	log.Printf("insert id %d, name %s, country %d, birth %d, gender %d, education %d, vaccine %s, origin %s, countIll %d, countVac %d",
+	log.Printf("insert id %d, name %s, country %d, birth %d, gender %d, education %d, vaccine %d, origin %d, countIll %d, countVac %d",
 		s.userID, s.userName, s.userData.Country, s.userData.Birth, s.userData.Gender, s.userData.Education, s.userData.Vaccine,
 		s.userData.Origin, s.userData.CountIll, s.userData.CountVac)
 	s.b.dbase.Insert(s.userID,

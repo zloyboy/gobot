@@ -2,8 +2,10 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/zloyboy/gobot/user"
@@ -73,8 +75,8 @@ func (dbase *Dbase) Insert(
 	birth int,
 	gender int,
 	education int,
-	origin string,
-	vaccine string,
+	vaccine int,
+	origin int,
 	countIll int,
 	ill []user.UserIll,
 	countVac int,
@@ -84,7 +86,7 @@ func (dbase *Dbase) Insert(
 	defer tx.Rollback()
 
 	stmt, _ := tx.Prepare("INSERT INTO user" +
-		"(teleId, created, modified, name, country, birth, gender, education, vaccine, origin, countIll, countVac)" +
+		"(teleId, created, modified, name, country, birth, gender, education, vaccineOpinion, originOpinion, countIll, countVac)" +
 		"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	defer stmt.Close()
 	stmt.Exec(teleId, date, date, name, country, birth, gender, education, vaccine, origin, countIll, countVac)
@@ -116,23 +118,25 @@ func (dbase *Dbase) CountIll() int {
 	return res
 }
 
-func (dbase *Dbase) ReadCountry() []string {
-	var countries []string
-	rows, err := dbase.db.Query("SELECT rus from country")
+func (dbase *Dbase) ReadCaption(table string) [][2]string {
+	var caps [][2]string
+	query := fmt.Sprintf("SELECT rus from %s", table)
+	rows, err := dbase.db.Query(query)
 	if err != nil {
 		return nil
 	}
 	defer rows.Close()
 
-	var country string
+	var cap [2]string
 	idx := 0
 	for rows.Next() {
-		err := rows.Scan(&country)
+		err := rows.Scan(&cap[0])
 		if err != nil {
 			return nil
 		}
-		countries = append(countries, country)
-		//log.Println(countries[idx])
+		cap[1] = strconv.Itoa(idx)
+		//log.Println(cap[0], cap[1])
+		caps = append(caps, cap)
 		idx++
 	}
 	err = rows.Err()
@@ -140,32 +144,5 @@ func (dbase *Dbase) ReadCountry() []string {
 		return nil
 	}
 
-	return countries
-}
-
-func (dbase *Dbase) ReadEducation() []string {
-	var educations []string
-	rows, err := dbase.db.Query("SELECT rus from education")
-	if err != nil {
-		return nil
-	}
-	defer rows.Close()
-
-	var education string
-	idx := 0
-	for rows.Next() {
-		err := rows.Scan(&education)
-		if err != nil {
-			return nil
-		}
-		educations = append(educations, education)
-		log.Println(educations[idx])
-		idx++
-	}
-	err = rows.Err()
-	if err != nil {
-		return nil
-	}
-
-	return educations
+	return caps
 }

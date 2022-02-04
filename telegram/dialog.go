@@ -92,16 +92,16 @@ const ask_country_msg = "Укажите пожалуйста страну про
 var countryInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
 func (b *Bot) readCountryFromDb() bool {
-	country := b.dbase.ReadCountry()
+	country := b.dbase.ReadCaption("userCountry")
 	if 4 <= len(country) {
 		countryInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(country[0], "0"),
-				tgbotapi.NewInlineKeyboardButtonData(country[1], "1"),
+				tgbotapi.NewInlineKeyboardButtonData(country[0][0], country[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(country[1][0], country[1][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(country[2], "2"),
-				tgbotapi.NewInlineKeyboardButtonData(country[3], "3"),
+				tgbotapi.NewInlineKeyboardButtonData(country[2][0], country[2][1]),
+				tgbotapi.NewInlineKeyboardButtonData(country[3][0], country[3][1]),
 			),
 		)
 		return true
@@ -130,13 +130,13 @@ const ask_education_msg = "Укажите пожалуйста ваше обра
 var educationInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
 func (b *Bot) readEducationFromDb() bool {
-	education := b.dbase.ReadEducation()
+	education := b.dbase.ReadCaption("userEducation")
 	if 3 <= len(education) {
 		educationInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(education[0], "0"),
-				tgbotapi.NewInlineKeyboardButtonData(education[1], "1"),
-				tgbotapi.NewInlineKeyboardButtonData(education[2], "2"),
+				tgbotapi.NewInlineKeyboardButtonData(education[0][0], education[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(education[1][0], education[1][1]),
+				tgbotapi.NewInlineKeyboardButtonData(education[2][0], education[2][1]),
 			),
 		)
 		return true
@@ -145,35 +145,48 @@ func (b *Bot) readEducationFromDb() bool {
 	return false
 }
 
-const ask_origin_msg = "Считаете ли вы что новый коронавирус это естественный природный процесс или к его созданию причастны люди?"
-
-var Nature = [2]string{"Природа", "Nature"}
-var Human = [2]string{"Люди", "Human"}
-
-var originInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Nature[0], Nature[1]),
-		tgbotapi.NewInlineKeyboardButtonData(Human[0], Human[1]),
-		tgbotapi.NewInlineKeyboardButtonData(Unknown[0], Unknown[1]),
-	),
-)
-
 const ask_vaccine_msg = "Считаете ли вы что существующие прививки (какие-то лучше, какие-то хуже) помогают предотвратить или облегчить болезнь?"
 
-var Helpful = [2]string{"Помогают", "Helpful"}
-var Useless = [2]string{"Бесполезны", "Useless"}
-var Dangerous = [2]string{"Опасны", "Dangerous"}
+var vaccineInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
-var vaccineInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Helpful[0], Helpful[1]),
-		tgbotapi.NewInlineKeyboardButtonData(Useless[0], Useless[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Dangerous[0], Dangerous[1]),
-		tgbotapi.NewInlineKeyboardButtonData(Unknown[0], Unknown[1]),
-	),
-)
+func (b *Bot) readVaccineFromDb() bool {
+	vaccine := b.dbase.ReadCaption("userVaccineOpinion")
+	if 3 <= len(vaccine) {
+		vaccineInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(vaccine[0][0], vaccine[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(vaccine[1][0], vaccine[1][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(vaccine[2][0], vaccine[2][1]),
+				tgbotapi.NewInlineKeyboardButtonData(Unknown[0], "-1"),
+			),
+		)
+		return true
+	}
+	log.Print("Couldn't read vaccine")
+	return false
+}
+
+const ask_origin_msg = "Считаете ли вы что новый коронавирус это естественный природный процесс или к его созданию причастны люди?"
+
+var originInlineKeyboard tgbotapi.InlineKeyboardMarkup
+
+func (b *Bot) readOriginFromDb() bool {
+	origin := b.dbase.ReadCaption("userOriginOpinion")
+	if 2 <= len(origin) {
+		originInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(origin[0][0], origin[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(origin[1][0], origin[1][1]),
+				tgbotapi.NewInlineKeyboardButtonData(Unknown[0], Unknown[1]),
+			),
+		)
+		return true
+	}
+	log.Print("Couldn't read origin")
+	return false
+}
 
 const ask_haveill_msg = "Считаете ли вы что переболели коронавирусом (возможно не один раз)?"
 const ask_countill_msg = "Введите пожалуйста сколько раз вы переболели коронавирусом"
