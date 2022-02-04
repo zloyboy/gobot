@@ -72,7 +72,7 @@ func (dbase *Dbase) Insert(
 	country int,
 	birth int,
 	gender int,
-	education string,
+	education int,
 	origin string,
 	vaccine string,
 	countIll int,
@@ -132,7 +132,7 @@ func (dbase *Dbase) ReadCountry() []string {
 			return nil
 		}
 		countries = append(countries, country)
-		log.Println(countries[idx])
+		//log.Println(countries[idx])
 		idx++
 	}
 	err = rows.Err()
@@ -141,4 +141,31 @@ func (dbase *Dbase) ReadCountry() []string {
 	}
 
 	return countries
+}
+
+func (dbase *Dbase) ReadEducation() []string {
+	var educations []string
+	rows, err := dbase.db.Query("SELECT rus from education")
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	var education string
+	idx := 0
+	for rows.Next() {
+		err := rows.Scan(&education)
+		if err != nil {
+			return nil
+		}
+		educations = append(educations, education)
+		log.Println(educations[idx])
+		idx++
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil
+	}
+
+	return educations
 }

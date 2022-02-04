@@ -34,7 +34,7 @@ type UserData struct {
 	Country   int
 	Birth     int
 	Gender    int
-	Education string
+	Education int
 	Origin    string
 	Vaccine   string
 	CountIll  int
@@ -48,7 +48,7 @@ func MakeUser() UserData {
 		Country:   -1,
 		Birth:     -1,
 		Gender:    -1,
-		Education: "",
+		Education: -1,
 		Origin:    "",
 		Vaccine:   "",
 		CountIll:  0,

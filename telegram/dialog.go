@@ -92,16 +92,16 @@ const ask_country_msg = "Укажите пожалуйста страну про
 var countryInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
 func (b *Bot) readCountryFromDb() bool {
-	user_country := b.dbase.ReadCountry()
-	if 4 <= len(user_country) {
+	country := b.dbase.ReadCountry()
+	if 4 <= len(country) {
 		countryInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(user_country[0], "0"),
-				tgbotapi.NewInlineKeyboardButtonData(user_country[1], "1"),
+				tgbotapi.NewInlineKeyboardButtonData(country[0], "0"),
+				tgbotapi.NewInlineKeyboardButtonData(country[1], "1"),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(user_country[2], "2"),
-				tgbotapi.NewInlineKeyboardButtonData(user_country[3], "3"),
+				tgbotapi.NewInlineKeyboardButtonData(country[2], "2"),
+				tgbotapi.NewInlineKeyboardButtonData(country[3], "3"),
 			),
 		)
 		return true
@@ -127,17 +127,23 @@ var genderInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 
 const ask_education_msg = "Укажите пожалуйста ваше образование"
 
-var School = [2]string{"Среднее", "School"}
-var College = [2]string{"Колледж", "College"}
-var University = [2]string{"Университет", "University"}
+var educationInlineKeyboard tgbotapi.InlineKeyboardMarkup
 
-var educationInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(School[0], School[1]),
-		tgbotapi.NewInlineKeyboardButtonData(College[0], College[1]),
-		tgbotapi.NewInlineKeyboardButtonData(University[0], University[1]),
-	),
-)
+func (b *Bot) readEducationFromDb() bool {
+	education := b.dbase.ReadEducation()
+	if 3 <= len(education) {
+		educationInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(education[0], "0"),
+				tgbotapi.NewInlineKeyboardButtonData(education[1], "1"),
+				tgbotapi.NewInlineKeyboardButtonData(education[2], "2"),
+			),
+		)
+		return true
+	}
+	log.Print("Couldn't read education")
+	return false
+}
 
 const ask_origin_msg = "Считаете ли вы что новый коронавирус это естественный природный процесс или к его созданию причастны люди?"
 

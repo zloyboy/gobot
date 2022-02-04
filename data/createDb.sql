@@ -6,7 +6,7 @@ create table if not exists user(
     country integer not null,
     birth integer not null,
     gender integer not null,
-    education varchar(255),
+    education integer not null,
     vaccine varchar(255),
     origin varchar(255),
     countIll integer not null,
@@ -42,5 +42,11 @@ create table if not exists country(
     rus string,
     FOREIGN KEY(id) REFERENCES user(country)
 );
-
 insert into country (rus) values ("Россия"), ("Украина"), ("Беларусь"), ("Казахстан");
+
+create table if not exists education(
+    id integer primary key,
+    rus string,
+    FOREIGN KEY(id) REFERENCES user(education)
+);
+insert into education (rus) values ("Среднее"), ("Колледж"), ("Университет");
