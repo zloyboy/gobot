@@ -2,9 +2,11 @@ package database
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
+
+	"github.com/zloyboy/gobot/user"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -26,17 +28,16 @@ func runScript(db *sql.DB, path string) bool {
 	return err == nil
 }
 
+var scripts = [4]string{"data/create_tbl_user.sql", "data/create_tbl_ill.sql", "data/create_tbl_vac.sql",
+	"data/create_idx_name.sql"}
+
 func createDb(db *sql.DB) error {
-	if runScript(db, "data/create_tbl_user.sql") {
-		if runScript(db, "data/create_tbl_ill.sql") {
-			if runScript(db, "data/create_tbl_vac.sql") {
-				if runScript(db, "data/create_idx_name.sql") {
-					return nil
-				}
-			}
+	for _, script := range scripts {
+		if !runScript(db, script) {
+			return fmt.Errorf("couldn't run %s ", script)
 		}
 	}
-	return errors.New("createDb fails")
+	return nil
 }
 
 func InitDb() *Dbase {
@@ -80,22 +81,28 @@ func (dbase *Dbase) Insert(
 	origin string,
 	vaccine string,
 	countIll int,
-	countVac int) error {
+	ill []user.UserIll,
+	countVac int,
+	vac []user.UserVac) error {
 
 	tx, _ := dbase.db.Begin()
 	defer tx.Rollback()
 
 	stmt, _ := tx.Prepare("INSERT INTO user" +
-		"(teleId, created, name, country, birth, gender, education, vaccine, origin, countIll, countVac)" +
-		"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		"(teleId, created, modified, name, country, birth, gender, education, vaccine, origin, countIll, countVac)" +
+		"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	defer stmt.Close()
-	stmt.Exec(teleId, date, name, country, birth, gender, education, vaccine, origin, countIll, countVac)
+	stmt.Exec(teleId, date, date, name, country, birth, gender, education, vaccine, origin, countIll, countVac)
 
-	stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month) values(?, ?, ?, ?, ?)")
-	stmt.Exec(nil, date, teleId, 2021, 1)
+	for i := 0; i < countIll; i++ {
+		stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month, sign, degree) values(?, ?, ?, ?, ?, ?, ?)")
+		stmt.Exec(nil, date, teleId, ill[i].Year, ill[i].Month, ill[i].Sign, ill[i].Degree)
+	}
 
-	stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month) values(?, ?, ?, ?, ?)")
-	stmt.Exec(nil, date, teleId, 2022, 2)
+	for i := 0; i < countVac; i++ {
+		stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month, kind, effect) values(?, ?, ?, ?, ?, ?, ?)")
+		stmt.Exec(nil, date, teleId, vac[i].Year, vac[i].Month, vac[i].Kind, vac[i].Effect)
+	}
 
 	tx.Commit()
 

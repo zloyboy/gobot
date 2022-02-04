@@ -1,6 +1,7 @@
 create table if not exists user(
     teleId integer primary key,
     created datetime,
+    modified datetime,
     name varchar(255),
     country varchar(255),
     birth integer not null,

@@ -5,49 +5,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/zloyboy/gobot/user"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 var user_session = make(map[int64]*UserSession)
-
-type UserData struct {
-	country   string
-	birth     int
-	gender    int
-	education string
-	origin    string
-	vaccine   string
-	countIll  int
-	yearIll   []int
-	monthIll  []int
-	signIll   []string
-	degreeIll []string
-	countVac  int
-	yearVac   []int
-	monthVac  []int
-	kindVac   []string
-	effectVac []string
-}
-
-func MakeUser() UserData {
-	return UserData{
-		country:   "",
-		birth:     -1,
-		gender:    -1,
-		education: "",
-		origin:    "",
-		vaccine:   "",
-		countIll:  0,
-		yearIll:   nil,
-		monthIll:  nil,
-		signIll:   nil,
-		degreeIll: nil,
-		countVac:  0,
-		yearVac:   nil,
-		monthVac:  nil,
-		kindVac:   nil,
-		effectVac: nil}
-}
 
 type UserSession struct {
 	b              *Bot
@@ -57,11 +20,13 @@ type UserSession struct {
 	userID, chatID int64
 	userName       string
 	userChan       chan string
-	userData       UserData
+	userData       user.UserData
+	userIll        user.UserIll
+	userVac        user.UserVac
 }
 
 func MakeSession(b *Bot, userID, chatID int64, userName string) *UserSession {
-	return &UserSession{b, 0, 0, 0, userID, chatID, userName, make(chan string), MakeUser()}
+	return &UserSession{b, 0, 0, 0, userID, chatID, userName, make(chan string), user.MakeUser(), user.MakeIll(), user.MakeVac()}
 }
 
 func (s *UserSession) nextStep() {
@@ -129,7 +94,7 @@ func (s *UserSession) sendRequest() bool {
 	case 6:
 		s.sendQuestion(ask_haveill_msg, yesnoInlineKeyboard)
 	case 7:
-		if 0 < s.userData.countIll {
+		if 0 < s.userData.CountIll {
 			s.sendQuestion(ask_countill_msg, nil)
 		} else {
 			s.nextStep()
@@ -139,12 +104,12 @@ func (s *UserSession) sendRequest() bool {
 	case 8:
 		s.count = 0
 		s.resetSubStep()
-		s.sendSubQuestion(ask_yearill_msg+nTimes(s.count+1, s.userData.countIll), yearInlineKeyboard)
+		s.sendSubQuestion(ask_yearill_msg+nTimes(s.count+1, s.userData.CountIll), yearInlineKeyboard)
 		s.nextStep()
 	case 9:
 		switch s.subState {
 		case 1:
-			s.sendSubQuestion(ask_monthill_msg+nTimes(s.count+1, s.userData.countIll), monthInlineKeyboard)
+			s.sendSubQuestion(ask_monthill_msg+nTimes(s.count+1, s.userData.CountIll), monthInlineKeyboard)
 		case 2:
 			s.sendSubQuestion(ask_signill_msg, signillInlineKeyboard)
 		case 3:
@@ -152,14 +117,15 @@ func (s *UserSession) sendRequest() bool {
 		case 4:
 			s.resetSubStep()
 			s.count++
-			if s.count < s.userData.countIll {
-				s.sendSubQuestion(ask_yearill_msg+nTimes(s.count+1, s.userData.countIll), yearInlineKeyboard)
+			s.userData.Ill = append(s.userData.Ill, s.userIll)
+			if s.count < s.userData.CountIll {
+				s.sendSubQuestion(ask_yearill_msg+nTimes(s.count+1, s.userData.CountIll), yearInlineKeyboard)
 			} else {
 				s.sendQuestion(ask_havevac_msg, yesnoInlineKeyboard)
 			}
 		}
 	case 10:
-		if 0 < s.userData.countVac {
+		if 0 < s.userData.CountVac {
 			s.sendQuestion(ask_countvac_msg, nil)
 		} else {
 			return false
@@ -167,12 +133,12 @@ func (s *UserSession) sendRequest() bool {
 	case 11:
 		s.count = 0
 		s.resetSubStep()
-		s.sendSubQuestion(ask_yearvac_msg+nTimes(s.count+1, s.userData.countVac), yearInlineKeyboard)
+		s.sendSubQuestion(ask_yearvac_msg+nTimes(s.count+1, s.userData.CountVac), yearInlineKeyboard)
 		s.nextStep()
 	case 12:
 		switch s.subState {
 		case 1:
-			s.sendSubQuestion(ask_monthvac_msg+nTimes(s.count+1, s.userData.countVac), monthInlineKeyboard)
+			s.sendSubQuestion(ask_monthvac_msg+nTimes(s.count+1, s.userData.CountVac), monthInlineKeyboard)
 		case 2:
 			s.sendSubQuestion(ask_kindvac_msg, kindvacInlineKeyboard)
 		case 3:
@@ -180,8 +146,9 @@ func (s *UserSession) sendRequest() bool {
 		case 4:
 			s.resetSubStep()
 			s.count++
-			if s.count < s.userData.countVac {
-				s.sendSubQuestion(ask_yearvac_msg+nTimes(s.count+1, s.userData.countVac), yearInlineKeyboard)
+			s.userData.Vac = append(s.userData.Vac, s.userVac)
+			if s.count < s.userData.CountVac {
+				s.sendSubQuestion(ask_yearvac_msg+nTimes(s.count+1, s.userData.CountVac), yearInlineKeyboard)
 			} else {
 				return false
 			}
@@ -200,7 +167,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		country := userData
 		switch country {
 		case Russia[1], Ukraine[1], Belarus[1], Kazakh[1]:
-			s.userData.country = country
+			s.userData.Country = country
 		default:
 			msg.Text = error_msg + "страна " + country + " не участвует в опросе"
 			ok = false
@@ -208,14 +175,14 @@ func (s *UserSession) getAnswer(userData string) bool {
 	case 2:
 		year, _ := strconv.Atoi(userData)
 		if 1920 < year && year < 2020 {
-			s.userData.birth = year
+			s.userData.Birth = year
 		} else {
 			msg.Text = error_msg + userData + " не корректный год"
 			ok = false
 		}
 	case 3:
 		if userData == Male[1] || userData == Female[1] {
-			s.userData.gender, _ = strconv.Atoi(userData)
+			s.userData.Gender, _ = strconv.Atoi(userData)
 		} else {
 			msg.Text = error_msg + "не корректный пол"
 			ok = false
@@ -224,7 +191,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		education := userData
 		switch education {
 		case School[1], College[1], University[1]:
-			s.userData.education = education
+			s.userData.Education = education
 		default:
 			msg.Text = error_msg + education + error_ans
 			ok = false
@@ -233,7 +200,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		vaccine := userData
 		switch vaccine {
 		case Helpful[1], Useless[1], Dangerous[1], Unknown[1]:
-			s.userData.vaccine = vaccine
+			s.userData.Vaccine = vaccine
 		default:
 			msg.Text = error_msg + vaccine + error_ans
 			ok = false
@@ -242,7 +209,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		origin := userData
 		switch origin {
 		case Nature[1], Human[1], Unknown[1]:
-			s.userData.origin = origin
+			s.userData.Origin = origin
 		default:
 			msg.Text = error_msg + origin + error_ans
 			ok = false
@@ -251,9 +218,9 @@ func (s *UserSession) getAnswer(userData string) bool {
 		haveill := userData
 		switch haveill {
 		case Yes[1]:
-			s.userData.countIll = 1
+			s.userData.CountIll = 1
 		case No[1]:
-			s.userData.countIll = 0
+			s.userData.CountIll = 0
 		default:
 			msg.Text = error_msg + haveill + error_ans
 			ok = false
@@ -261,7 +228,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 	case 8:
 		countIll, _ := strconv.Atoi(userData)
 		if 0 < countIll && countIll < 5 {
-			s.userData.countIll = countIll
+			s.userData.CountIll = countIll
 		} else {
 			msg.Text = error_msg + userData + error_ans
 			ok = false
@@ -271,7 +238,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		case 1:
 			yearIll, _ := strconv.Atoi(userData)
 			if 2020 <= yearIll && yearIll <= 2022 {
-				s.userData.yearIll = append(s.userData.yearIll, yearIll)
+				s.userIll.Year = yearIll
 			} else {
 				msg.Text = error_msg + userData + error_ans
 				ok = false
@@ -279,7 +246,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		case 2:
 			monthIll, _ := strconv.Atoi(userData)
 			if 1 <= monthIll && monthIll <= 12 {
-				s.userData.monthIll = append(s.userData.monthIll, monthIll)
+				s.userIll.Month = monthIll
 			} else {
 				msg.Text = error_msg + userData + error_ans
 				ok = false
@@ -288,7 +255,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 			signIll := userData
 			switch signIll {
 			case Medic[1], Test[1], Symptom[1]:
-				s.userData.signIll = append(s.userData.signIll, signIll)
+				s.userIll.Sign = signIll
 			default:
 				msg.Text = error_msg + userData + error_ans
 				ok = false
@@ -297,7 +264,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 			degreeIll := userData
 			switch degreeIll {
 			case HospIvl[1], Hospital[1], HomeHard[1], HomeEasy[1], OnFoot[1], NoSymptom[1]:
-				s.userData.degreeIll = append(s.userData.degreeIll, degreeIll)
+				s.userIll.Degree = degreeIll
 			default:
 				msg.Text = error_msg + degreeIll + error_ans
 				ok = false
@@ -307,9 +274,9 @@ func (s *UserSession) getAnswer(userData string) bool {
 		haveVac := userData
 		switch haveVac {
 		case Yes[1]:
-			s.userData.countVac = 1
+			s.userData.CountVac = 1
 		case No[1]:
-			s.userData.countVac = 0
+			s.userData.CountVac = 0
 		default:
 			msg.Text = error_msg + haveVac + error_ans
 			ok = false
@@ -317,7 +284,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 	case 11:
 		countVac, _ := strconv.Atoi(userData)
 		if 0 < countVac && countVac < 5 {
-			s.userData.countVac = countVac
+			s.userData.CountVac = countVac
 		} else {
 			msg.Text = error_msg + userData + error_ans
 			ok = false
@@ -327,7 +294,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		case 1:
 			yearVac, _ := strconv.Atoi(userData)
 			if 2020 <= yearVac && yearVac <= 2022 {
-				s.userData.yearVac = append(s.userData.yearVac, yearVac)
+				s.userVac.Year = yearVac
 			} else {
 				msg.Text = error_msg + userData + error_ans
 				ok = false
@@ -335,7 +302,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		case 2:
 			monthVac, _ := strconv.Atoi(userData)
 			if 1 <= monthVac && monthVac <= 12 {
-				s.userData.monthVac = append(s.userData.monthVac, monthVac)
+				s.userVac.Month = monthVac
 			} else {
 				msg.Text = error_msg + userData + error_ans
 				ok = false
@@ -344,7 +311,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 			kindVac := userData
 			switch kindVac {
 			case SputnikV[1], SputnikL[1], EpiVac[1], Kovivak[1]:
-				s.userData.kindVac = append(s.userData.kindVac, kindVac)
+				s.userVac.Kind = kindVac
 			default:
 				msg.Text = error_msg + userData + error_ans
 				ok = false
@@ -353,7 +320,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 			effectVac := userData
 			switch effectVac {
 			case HardEffect[1], MediumEffect[1], EasyEffect[1]:
-				s.userData.effectVac = append(s.userData.effectVac, effectVac)
+				s.userVac.Effect = effectVac
 			default:
 				msg.Text = error_msg + userData + error_ans
 				ok = false
@@ -369,20 +336,22 @@ func (s *UserSession) writeResult() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
 	log.Printf("insert id %d, name %s, country %s, birth %d, gender %d, education %s, vaccine %s, origin %s, countIll %d, countVac %d",
-		s.userID, s.userName, s.userData.country, s.userData.birth, s.userData.gender, s.userData.education, s.userData.vaccine,
-		s.userData.origin, s.userData.countIll, s.userData.countVac)
+		s.userID, s.userName, s.userData.Country, s.userData.Birth, s.userData.Gender, s.userData.Education, s.userData.Vaccine,
+		s.userData.Origin, s.userData.CountIll, s.userData.CountVac)
 	s.b.dbase.Insert(s.userID,
 		time.Now().Local().Format("2006-01-02 15:04:05"),
 		s.userName,
-		s.userData.country,
-		s.userData.birth,
-		s.userData.gender,
-		s.userData.education,
-		s.userData.vaccine,
-		s.userData.origin,
-		s.userData.countIll,
-		s.userData.countVac)
-	s.b.stat.RefreshStatic(s.userData.countIll)
+		s.userData.Country,
+		s.userData.Birth,
+		s.userData.Gender,
+		s.userData.Education,
+		s.userData.Vaccine,
+		s.userData.Origin,
+		s.userData.CountIll,
+		s.userData.Ill,
+		s.userData.CountVac,
+		s.userData.Vac)
+	s.b.stat.RefreshStatic(s.userData.CountIll)
 	msg.Text = s.b.stat.MakeStatic() + repeat_msg
 	msg.ReplyMarkup = startKeyboard
 

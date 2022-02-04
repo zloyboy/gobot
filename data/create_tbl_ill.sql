@@ -4,5 +4,7 @@ create table if not exists userIllness(
     teleId integer,
     year integer,
     month integer,
+    sign string,
+    degree string,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
