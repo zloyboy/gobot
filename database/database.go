@@ -69,7 +69,7 @@ func (dbase *Dbase) Insert(
 	teleId int64,
 	date string,
 	name string,
-	country string,
+	country int,
 	birth int,
 	gender int,
 	education string,
@@ -114,4 +114,31 @@ func (dbase *Dbase) CountIll() int {
 	var res = 0
 	dbase.db.QueryRow("SELECT count(*) FROM user WHERE 0<countIll").Scan(&res)
 	return res
+}
+
+func (dbase *Dbase) ReadCountry() []string {
+	var countries []string
+	rows, err := dbase.db.Query("SELECT rus from country")
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	var country string
+	idx := 0
+	for rows.Next() {
+		err := rows.Scan(&country)
+		if err != nil {
+			return nil
+		}
+		countries = append(countries, country)
+		log.Println(countries[idx])
+		idx++
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil
+	}
+
+	return countries
 }

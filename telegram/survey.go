@@ -164,12 +164,11 @@ func (s *UserSession) getAnswer(userData string) bool {
 
 	switch s.state {
 	case 1:
-		country := userData
-		switch country {
-		case Russia[1], Ukraine[1], Belarus[1], Kazakh[1]:
+		country, _ := strconv.Atoi(userData)
+		if country < 4 {
 			s.userData.Country = country
-		default:
-			msg.Text = error_msg + "страна " + country + " не участвует в опросе"
+		} else {
+			msg.Text = error_msg + " не корректное название страны"
 			ok = false
 		}
 	case 2:
@@ -335,7 +334,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 func (s *UserSession) writeResult() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
-	log.Printf("insert id %d, name %s, country %s, birth %d, gender %d, education %s, vaccine %s, origin %s, countIll %d, countVac %d",
+	log.Printf("insert id %d, name %s, country %d, birth %d, gender %d, education %s, vaccine %s, origin %s, countIll %d, countVac %d",
 		s.userID, s.userName, s.userData.Country, s.userData.Birth, s.userData.Gender, s.userData.Education, s.userData.Vaccine,
 		s.userData.Origin, s.userData.CountIll, s.userData.CountVac)
 	s.b.dbase.Insert(s.userID,

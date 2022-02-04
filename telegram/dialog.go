@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"log"
 	"strconv"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -88,20 +89,26 @@ var startKeyboard = tgbotapi.NewReplyKeyboard(
 
 const ask_country_msg = "Укажите пожалуйста страну проживания:"
 
-var Russia = [2]string{"Россия", "Russia"}
-var Ukraine = [2]string{"Украина", "Ukraine"}
-var Belarus = [2]string{"Беларусь", "Belarus"}
-var Kazakh = [2]string{"Казахстан", "Kazakhstan"}
-var countryInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Russia[0], Russia[1]),
-		tgbotapi.NewInlineKeyboardButtonData(Ukraine[0], Ukraine[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Belarus[0], Belarus[1]),
-		tgbotapi.NewInlineKeyboardButtonData(Kazakh[0], Kazakh[1]),
-	),
-)
+var countryInlineKeyboard tgbotapi.InlineKeyboardMarkup
+
+func (b *Bot) readCountryFromDb() bool {
+	user_country := b.dbase.ReadCountry()
+	if 4 <= len(user_country) {
+		countryInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(user_country[0], "0"),
+				tgbotapi.NewInlineKeyboardButtonData(user_country[1], "1"),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData(user_country[2], "2"),
+				tgbotapi.NewInlineKeyboardButtonData(user_country[3], "3"),
+			),
+		)
+		return true
+	}
+	log.Print("Couldn't read countries")
+	return false
+}
 
 const ask_birth_msg = "Введите пожалуйста год рождения"
 

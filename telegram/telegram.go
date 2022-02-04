@@ -26,6 +26,9 @@ func (b *Bot) Run() {
 	u.Timeout = 60
 	updates := b.bot.GetUpdatesChan(u)
 
+	if !b.readCountryFromDb() {
+		return
+	}
 	b.readStatFromDb()
 
 	go b.utime.DeleteTimeouts()

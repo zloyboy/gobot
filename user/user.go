@@ -31,7 +31,7 @@ func MakeVac() UserVac {
 }
 
 type UserData struct {
-	Country   string
+	Country   int
 	Birth     int
 	Gender    int
 	Education string
@@ -45,7 +45,7 @@ type UserData struct {
 
 func MakeUser() UserData {
 	return UserData{
-		Country:   "",
+		Country:   -1,
 		Birth:     -1,
 		Gender:    -1,
 		Education: "",

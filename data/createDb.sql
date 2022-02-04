@@ -36,3 +36,11 @@ create table if not exists userVaccine(
     effect string,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
+
+create table if not exists country(
+    id integer primary key,
+    rus string,
+    FOREIGN KEY(id) REFERENCES user(country)
+);
+
+insert into country (rus) values ("Россия"), ("Украина"), ("Беларусь"), ("Казахстан");
