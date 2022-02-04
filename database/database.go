@@ -2,9 +2,9 @@ package database
 
 import (
 	"database/sql"
-	"fmt"
 	"io/ioutil"
 	"log"
+	"strings"
 
 	"github.com/zloyboy/gobot/user"
 
@@ -15,26 +15,21 @@ type Dbase struct {
 	db *sql.DB
 }
 
-func runScript(db *sql.DB, path string) bool {
+func createDb(db *sql.DB, path string) error {
 	content, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Printf("Script %s is not found", path)
-		return false
+		log.Printf("Couldn't read %s", path)
+		return err
 	}
-	stmt, err := db.Prepare(string(content))
-	if err == nil {
-		stmt.Exec()
-	}
-	return err == nil
-}
-
-var scripts = [4]string{"data/create_tbl_user.sql", "data/create_tbl_ill.sql", "data/create_tbl_vac.sql",
-	"data/create_idx_name.sql"}
-
-func createDb(db *sql.DB) error {
+	scripts := strings.Split(string(content), ";\n")
 	for _, script := range scripts {
-		if !runScript(db, script) {
-			return fmt.Errorf("couldn't run %s ", script)
+		if len(script) > 0 {
+			stmt, err := db.Prepare(script)
+			if err == nil {
+				stmt.Exec()
+			} else {
+				return err
+			}
 		}
 	}
 	return nil
@@ -55,7 +50,7 @@ func InitDb() *Dbase {
 	err = db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='user'").Scan(&tableNname)
 	if err != nil {
 		log.Print("Table is not found, trying to create DB")
-		err = createDb(db)
+		err = createDb(db, "data/createDb.sql")
 	}
 	if err != nil {
 		return nil

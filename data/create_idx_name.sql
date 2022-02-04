@@ -1,1 +1,0 @@
-create index if not exists name_index on user (name);
