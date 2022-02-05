@@ -1,18 +1,20 @@
 package user
 
-const Idx_country = 0
-const Idx_birth = 1
-const Idx_gender = 2
-const Idx_education = 3
-const Idx_vacc_opin = 4
-const Idx_orgn_opin = 5
+const (
+	Idx_country   = 0
+	Idx_birth     = 1
+	Idx_gender    = 2
+	Idx_education = 3
+	Idx_vacc_opin = 4
+	Idx_orgn_opin = 5
 
-const Idx_year = 0
-const Idx_month = 1
-const Idx_sign = 2
-const Idx_degree = 3
-const Idx_kind = 2
-const Idx_effect = 3
+	Idx_year   = 0
+	Idx_month  = 1
+	Idx_sign   = 2
+	Idx_degree = 3
+	Idx_kind   = 2
+	Idx_effect = 3
+)
 
 type UserData struct {
 	Base     [6]int

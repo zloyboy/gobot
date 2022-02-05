@@ -13,6 +13,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const idx_country = user.Idx_country
+const idx_birth = user.Idx_birth
+const idx_gender = user.Idx_gender
+const idx_education = user.Idx_education
+const idx_vacc_opin = user.Idx_vacc_opin
+const idx_orgn_opin = user.Idx_orgn_opin
+
 const idx_year = user.Idx_year
 const idx_month = user.Idx_month
 const idx_sign = user.Idx_sign
@@ -78,16 +85,7 @@ func (dbase *Dbase) Insert(
 	teleId int64,
 	date string,
 	name string,
-	country int,
-	birth int,
-	gender int,
-	education int,
-	vaccine int,
-	origin int,
-	countIll int,
-	ill [][4]int,
-	countVac int,
-	vac [][4]int) error {
+	user user.UserData) error {
 
 	tx, _ := dbase.db.Begin()
 	defer tx.Rollback()
@@ -96,16 +94,17 @@ func (dbase *Dbase) Insert(
 		"(teleId, created, modified, name, country, birth, gender, education, vaccineOpinion, originOpinion, countIll, countVac)" +
 		"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	defer stmt.Close()
-	stmt.Exec(teleId, date, date, name, country, birth, gender, education, vaccine, origin, countIll, countVac)
+	stmt.Exec(teleId, date, date, name, user.Base[idx_country], user.Base[idx_birth], user.Base[idx_gender],
+		user.Base[idx_education], user.Base[idx_vacc_opin], user.Base[idx_orgn_opin], user.CountIll, user.CountVac)
 
-	for i := 0; i < countIll; i++ {
+	for i := 0; i < user.CountIll; i++ {
 		stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month, sign, degree) values(?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, ill[i][idx_year], ill[i][idx_month], ill[i][idx_sign], ill[i][idx_degree])
+		stmt.Exec(nil, date, teleId, user.Ill[i][idx_year], user.Ill[i][idx_month], user.Ill[i][idx_sign], user.Ill[i][idx_degree])
 	}
 
-	for i := 0; i < countVac; i++ {
+	for i := 0; i < user.CountVac; i++ {
 		stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month, kind, effect) values(?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, vac[i][idx_year], vac[i][idx_month], vac[i][idx_kind], vac[i][idx_effect])
+		stmt.Exec(nil, date, teleId, user.Vac[i][idx_year], user.Vac[i][idx_month], user.Vac[i][idx_kind], user.Vac[i][idx_effect])
 	}
 
 	tx.Commit()
@@ -125,7 +124,7 @@ func (dbase *Dbase) CountIll() int {
 	return res
 }
 
-func (dbase *Dbase) ReadCaption(table string) [][2]string {
+func (dbase *Dbase) ReadCaption(table string, arg ...int) [][2]string {
 	var caps [][2]string
 	query := fmt.Sprintf("SELECT rus from %s", table)
 	rows, err := dbase.db.Query(query)
@@ -136,6 +135,9 @@ func (dbase *Dbase) ReadCaption(table string) [][2]string {
 
 	var cap [2]string
 	idx := 0
+	if 0 < len(arg) {
+		idx = arg[0]
+	}
 	for rows.Next() {
 		err := rows.Scan(&cap[0])
 		if err != nil {
