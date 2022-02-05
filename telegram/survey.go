@@ -10,6 +10,22 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+const st_country = 0
+const st_birth = 1
+const st_gender = 2
+const st_education = 3
+const st_vacc_opin = 4
+const st_orgn_opin = 5
+const st_have_ill = st_orgn_opin + 1 //6
+
+//const sst_year = user.Idx_year
+const sst_month = user.Idx_month
+const sst_sign = user.Idx_sign
+const sst_degree = user.Idx_degree
+const sst_kind = user.Idx_kind
+const sst_effect = user.Idx_effect
+const sst_next = sst_degree + 1 // 4
+
 var user_session = make(map[int64]*UserSession)
 
 type UserSession struct {
@@ -21,12 +37,12 @@ type UserSession struct {
 	userName       string
 	userChan       chan string
 	userData       user.UserData
-	userIll        user.UserIll
-	userVac        user.UserVac
+	userIll        [4]int
+	userVac        [4]int
 }
 
 func MakeSession(b *Bot, userID, chatID int64, userName string) *UserSession {
-	return &UserSession{b, 0, 0, 0, userID, chatID, userName, make(chan string), user.MakeUser(), user.MakeIll(), user.MakeVac()}
+	return &UserSession{b, 0, 0, 0, userID, chatID, userName, make(chan string), user.MakeUser(), user.MakeSubUser(), user.MakeSubUser()}
 }
 
 func (s *UserSession) nextStep() {
@@ -81,18 +97,8 @@ func (s *UserSession) sendSubQuestion(text string, keyboard interface{}) {
 
 func (s *UserSession) sendRequest() bool {
 	switch s.state {
-	case 1:
-		s.sendQuestion(ask_birth_msg, nil)
-	case 2:
-		s.sendQuestion(ask_gender_msg, genderInlineKeyboard)
-	case 3:
-		s.sendQuestion(ask_education_msg, educationInlineKeyboard)
-	case 4:
-		s.sendQuestion(ask_vaccine_msg, vaccineInlineKeyboard)
-	case 5:
-		s.sendQuestion(ask_origin_msg, originInlineKeyboard)
-	case 6:
-		s.sendQuestion(ask_haveill_msg, yesnoInlineKeyboard)
+	case st_birth, st_gender, st_education, st_vacc_opin, st_orgn_opin, st_have_ill:
+		s.sendQuestion(baseQuestion[s.state].ask, baseQuestion[s.state].key)
 	case 7:
 		if 0 < s.userData.CountIll {
 			s.sendQuestion(ask_countill_msg, nil)
@@ -104,22 +110,18 @@ func (s *UserSession) sendRequest() bool {
 	case 8:
 		s.count = 0
 		s.resetSubStep()
-		s.sendSubQuestion(ask_yearill_msg+nTimes(s.count+1, s.userData.CountIll), yearInlineKeyboard)
+		s.sendSubQuestion(illQuestion[s.subState].ask, illQuestion[s.subState].key)
 		s.nextStep()
 	case 9:
 		switch s.subState {
-		case 1:
-			s.sendSubQuestion(ask_monthill_msg+nTimes(s.count+1, s.userData.CountIll), monthInlineKeyboard)
-		case 2:
-			s.sendSubQuestion(ask_signill_msg, signillInlineKeyboard)
-		case 3:
-			s.sendSubQuestion(ask_degreeill_msg, degreeillInlineKeyboard)
+		case sst_month, sst_sign, sst_degree:
+			s.sendSubQuestion(illQuestion[s.subState].ask, illQuestion[s.subState].key)
 		case 4:
 			s.resetSubStep()
 			s.count++
 			s.userData.Ill = append(s.userData.Ill, s.userIll)
 			if s.count < s.userData.CountIll {
-				s.sendSubQuestion(ask_yearill_msg+nTimes(s.count+1, s.userData.CountIll), yearInlineKeyboard)
+				s.sendSubQuestion(illQuestion[s.subState].ask, yearInlineKeyboard)
 			} else {
 				s.sendQuestion(ask_havevac_msg, yesnoInlineKeyboard)
 			}
@@ -133,22 +135,18 @@ func (s *UserSession) sendRequest() bool {
 	case 11:
 		s.count = 0
 		s.resetSubStep()
-		s.sendSubQuestion(ask_yearvac_msg+nTimes(s.count+1, s.userData.CountVac), yearInlineKeyboard)
+		s.sendSubQuestion(vacQuestion[s.subState].ask, vacQuestion[s.subState].key)
 		s.nextStep()
 	case 12:
 		switch s.subState {
-		case 1:
-			s.sendSubQuestion(ask_monthvac_msg+nTimes(s.count+1, s.userData.CountVac), monthInlineKeyboard)
-		case 2:
-			s.sendSubQuestion(ask_kindvac_msg, kindvacInlineKeyboard)
-		case 3:
-			s.sendSubQuestion(ask_effectvac_msg, effectvacInlineKeyboard)
+		case sst_month, sst_kind, sst_effect:
+			s.sendSubQuestion(vacQuestion[s.subState].ask, vacQuestion[s.subState].key)
 		case 4:
 			s.resetSubStep()
 			s.count++
 			s.userData.Vac = append(s.userData.Vac, s.userVac)
 			if s.count < s.userData.CountVac {
-				s.sendSubQuestion(ask_yearvac_msg+nTimes(s.count+1, s.userData.CountVac), yearInlineKeyboard)
+				s.sendSubQuestion(vacQuestion[s.subState].ask, vacQuestion[s.subState].key)
 			} else {
 				return false
 			}
@@ -163,49 +161,11 @@ func (s *UserSession) getAnswer(userData string) bool {
 	var ok = true
 
 	switch s.state {
-	case 1:
-		country, _ := strconv.Atoi(userData)
-		if country < 4 {
-			s.userData.Country = country
-		} else {
-			msg.Text = error_msg + error_ans
-			ok = false
-		}
-	case 2:
-		year, _ := strconv.Atoi(userData)
-		if 1920 < year && year < 2020 {
-			s.userData.Birth = year
-		} else {
-			msg.Text = error_msg + userData + " не корректный год"
-			ok = false
-		}
-	case 3:
-		if userData == Male[1] || userData == Female[1] {
-			s.userData.Gender, _ = strconv.Atoi(userData)
-		} else {
-			msg.Text = error_msg + "не корректный пол"
-			ok = false
-		}
-	case 4:
-		education, _ := strconv.Atoi(userData)
-		if education < 3 {
-			s.userData.Education = education
-		} else {
-			msg.Text = error_msg + error_ans
-			ok = false
-		}
-	case 5:
-		vaccine, _ := strconv.Atoi(userData)
-		if vaccine < 3 {
-			s.userData.Vaccine = vaccine
-		} else {
-			msg.Text = error_msg + error_ans
-			ok = false
-		}
-	case 6:
-		origin, _ := strconv.Atoi(userData)
-		if origin < 2 {
-			s.userData.Origin = origin
+	case st_birth, st_gender, st_education, st_vacc_opin, st_orgn_opin, st_have_ill:
+		val, _ := strconv.Atoi(userData)
+		idx := s.state - 1
+		if baseQuestion[idx].min <= val && val <= baseQuestion[idx].max {
+			s.userData.Base[idx] = val
 		} else {
 			msg.Text = error_msg + error_ans
 			ok = false
@@ -231,34 +191,11 @@ func (s *UserSession) getAnswer(userData string) bool {
 		}
 	case 9:
 		switch s.subState {
-		case 1:
-			yearIll, _ := strconv.Atoi(userData)
-			if 2020 <= yearIll && yearIll <= 2022 {
-				s.userIll.Year = yearIll
-			} else {
-				msg.Text = error_msg + userData + error_ans
-				ok = false
-			}
-		case 2:
-			monthIll, _ := strconv.Atoi(userData)
-			if 1 <= monthIll && monthIll <= 12 {
-				s.userIll.Month = monthIll
-			} else {
-				msg.Text = error_msg + userData + error_ans
-				ok = false
-			}
-		case 3:
-			signIll, _ := strconv.Atoi(userData)
-			if signIll < 3 {
-				s.userIll.Sign = signIll
-			} else {
-				msg.Text = error_msg + userData + error_ans
-				ok = false
-			}
-		case 4:
-			degreeIll, _ := strconv.Atoi(userData)
-			if degreeIll < 6 {
-				s.userIll.Degree = degreeIll
+		case sst_month, sst_sign, sst_degree, sst_next:
+			val, _ := strconv.Atoi(userData)
+			idx := s.subState - 1
+			if illQuestion[idx].min <= val && val <= illQuestion[idx].max {
+				s.userIll[idx] = val
 			} else {
 				msg.Text = error_msg + error_ans
 				ok = false
@@ -285,34 +222,11 @@ func (s *UserSession) getAnswer(userData string) bool {
 		}
 	case 12:
 		switch s.subState {
-		case 1:
-			yearVac, _ := strconv.Atoi(userData)
-			if 2020 <= yearVac && yearVac <= 2022 {
-				s.userVac.Year = yearVac
-			} else {
-				msg.Text = error_msg + userData + error_ans
-				ok = false
-			}
-		case 2:
-			monthVac, _ := strconv.Atoi(userData)
-			if 1 <= monthVac && monthVac <= 12 {
-				s.userVac.Month = monthVac
-			} else {
-				msg.Text = error_msg + userData + error_ans
-				ok = false
-			}
-		case 3:
-			kindVac, _ := strconv.Atoi(userData)
-			if kindVac < 4 {
-				s.userVac.Kind = kindVac
-			} else {
-				msg.Text = error_msg + error_ans
-				ok = false
-			}
-		case 4:
-			effectVac, _ := strconv.Atoi(userData)
-			if effectVac < 3 {
-				s.userVac.Effect = effectVac
+		case sst_month, sst_kind, sst_effect, sst_next:
+			val, _ := strconv.Atoi(userData)
+			idx := s.subState - 1
+			if vacQuestion[idx].min <= val && val <= vacQuestion[idx].max {
+				s.userVac[idx] = val
 			} else {
 				msg.Text = error_msg + error_ans
 				ok = false
@@ -328,17 +242,17 @@ func (s *UserSession) writeResult() {
 	msg := tgbotapi.NewMessage(s.chatID, "")
 
 	log.Printf("insert id %d, name %s, country %d, birth %d, gender %d, education %d, vaccine %d, origin %d, countIll %d, countVac %d",
-		s.userID, s.userName, s.userData.Country, s.userData.Birth, s.userData.Gender, s.userData.Education, s.userData.Vaccine,
-		s.userData.Origin, s.userData.CountIll, s.userData.CountVac)
+		s.userID, s.userName, s.userData.Base[st_country], s.userData.Base[st_birth], s.userData.Base[st_gender], s.userData.Base[st_education],
+		s.userData.Base[st_vacc_opin], s.userData.Base[st_orgn_opin], s.userData.CountIll, s.userData.CountVac)
 	s.b.dbase.Insert(s.userID,
 		time.Now().Local().Format("2006-01-02 15:04:05"),
 		s.userName,
-		s.userData.Country,
-		s.userData.Birth,
-		s.userData.Gender,
-		s.userData.Education,
-		s.userData.Vaccine,
-		s.userData.Origin,
+		s.userData.Base[st_country],
+		s.userData.Base[st_birth],
+		s.userData.Base[st_gender],
+		s.userData.Base[st_education],
+		s.userData.Base[st_vacc_opin],
+		s.userData.Base[st_orgn_opin],
 		s.userData.CountIll,
 		s.userData.Ill,
 		s.userData.CountVac,
@@ -365,7 +279,7 @@ func (s *UserSession) exit() {
 func (s *UserSession) RunSurvey(ch chan string) {
 	defer s.exit()
 	if s.startSurvey() {
-		s.sendQuestion(ask_country_msg, countryInlineKeyboard)
+		s.sendQuestion(baseQuestion[st_country].ask, baseQuestion[st_country].key)
 		for {
 			data := <-ch
 			if !s.getAnswer(data) {

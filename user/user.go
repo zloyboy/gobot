@@ -1,58 +1,36 @@
 package user
 
-type UserIll struct {
-	Year   int
-	Month  int
-	Sign   int
-	Degree int
-}
+const Idx_country = 0
+const Idx_birth = 1
+const Idx_gender = 2
+const Idx_education = 3
+const Idx_vacc_opin = 4
+const Idx_orgn_opin = 5
 
-func MakeIll() UserIll {
-	return UserIll{
-		Year:   0,
-		Month:  0,
-		Sign:   -1,
-		Degree: -1}
-}
-
-type UserVac struct {
-	Year   int
-	Month  int
-	Kind   int
-	Effect int
-}
-
-func MakeVac() UserVac {
-	return UserVac{
-		Year:   0,
-		Month:  0,
-		Kind:   -1,
-		Effect: -1}
-}
+const Idx_year = 0
+const Idx_month = 1
+const Idx_sign = 2
+const Idx_degree = 3
+const Idx_kind = 2
+const Idx_effect = 3
 
 type UserData struct {
-	Country   int
-	Birth     int
-	Gender    int
-	Education int
-	Vaccine   int
-	Origin    int
-	CountIll  int
-	Ill       []UserIll
-	CountVac  int
-	Vac       []UserVac
+	Base     [6]int
+	CountIll int
+	Ill      [][4]int
+	CountVac int
+	Vac      [][4]int
 }
 
 func MakeUser() UserData {
 	return UserData{
-		Country:   -1,
-		Birth:     -1,
-		Gender:    -1,
-		Education: -1,
-		Vaccine:   -1,
-		Origin:    -1,
-		CountIll:  0,
-		Ill:       nil,
-		CountVac:  0,
-		Vac:       nil}
+		Base:     [6]int{-1, -1, -1, -1, -1, -1},
+		CountIll: 0,
+		Ill:      nil,
+		CountVac: 0,
+		Vac:      nil}
+}
+
+func MakeSubUser() [4]int {
+	return [4]int{-1, -1, -1, -1}
 }

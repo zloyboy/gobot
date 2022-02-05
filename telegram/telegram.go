@@ -36,6 +36,7 @@ func (b *Bot) Run() {
 		!b.readVaccineEffectFromDb() {
 		return
 	}
+	b.setKeyboards()
 	b.readStatFromDb()
 
 	go b.utime.DeleteTimeouts()

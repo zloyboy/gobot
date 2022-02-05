@@ -13,6 +13,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const idx_year = user.Idx_year
+const idx_month = user.Idx_month
+const idx_sign = user.Idx_sign
+const idx_degree = user.Idx_degree
+const idx_kind = user.Idx_kind
+const idx_effect = user.Idx_effect
+
 type Dbase struct {
 	db *sql.DB
 }
@@ -78,9 +85,9 @@ func (dbase *Dbase) Insert(
 	vaccine int,
 	origin int,
 	countIll int,
-	ill []user.UserIll,
+	ill [][4]int,
 	countVac int,
-	vac []user.UserVac) error {
+	vac [][4]int) error {
 
 	tx, _ := dbase.db.Begin()
 	defer tx.Rollback()
@@ -93,12 +100,12 @@ func (dbase *Dbase) Insert(
 
 	for i := 0; i < countIll; i++ {
 		stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month, sign, degree) values(?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, ill[i].Year, ill[i].Month, ill[i].Sign, ill[i].Degree)
+		stmt.Exec(nil, date, teleId, ill[i][idx_year], ill[i][idx_month], ill[i][idx_sign], ill[i][idx_degree])
 	}
 
 	for i := 0; i < countVac; i++ {
 		stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month, kind, effect) values(?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, vac[i].Year, vac[i].Month, vac[i].Kind, vac[i].Effect)
+		stmt.Exec(nil, date, teleId, vac[i][idx_year], vac[i][idx_month], vac[i][idx_kind], vac[i][idx_effect])
 	}
 
 	tx.Commit()

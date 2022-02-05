@@ -11,6 +11,23 @@ const error_msg = "Произошла ошибка: "
 const error_ans = " не корректный ответ"
 const abort_msg = "Опрос завершен из-за ошибки. Попробуйте начать сначала, но не ранее чем через 10 секунд"
 
+type BaseQuestion struct {
+	ask string
+	key interface{}
+	min int
+	max int
+}
+
+var baseQuestion = []BaseQuestion{
+	{"Укажите пожалуйста страну проживания", nil, 0, 3},
+	{"Введите пожалуйста год рождения", nil, 1920, 2020},
+	{"Укажите пожалуйста ваш пол", nil, 0, 1},
+	{"Укажите пожалуйста ваше образование", nil, 0, 2},
+	{"Считаете ли вы что существующие прививки (какие-то лучше, какие-то хуже) помогают предотвратить или облегчить болезнь?", nil, -1, 2},
+	{"Считаете ли вы что новый коронавирус это естественный природный процесс или к его созданию причастны люди?", nil, -1, 1},
+	{"Считаете ли вы что переболели коронавирусом (возможно не один раз)?", nil, 0, 0},
+}
+
 func nTimes(time, count int) string {
 	if 1 < count {
 		return strconv.Itoa(time) + "й раз"
@@ -87,14 +104,10 @@ var startKeyboard = tgbotapi.NewReplyKeyboard(
 	),
 )
 
-const ask_country_msg = "Укажите пожалуйста страну проживания:"
-
-var countryInlineKeyboard tgbotapi.InlineKeyboardMarkup
-
 func (b *Bot) readCountryFromDb() bool {
 	country := b.dbase.ReadCaption("userCountry")
 	if 4 <= len(country) {
-		countryInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		baseQuestion[st_country].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(country[0][0], country[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(country[1][0], country[1][1]),
@@ -110,29 +123,26 @@ func (b *Bot) readCountryFromDb() bool {
 	return false
 }
 
-const ask_birth_msg = "Введите пожалуйста год рождения"
-
-const ask_gender_msg = "Укажите пожалуйста ваш пол"
-
 var Male = [2]string{"Мужской", "1"}
 var Female = [2]string{"Женский", "0"}
-var genderInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Male[0], Male[1]),
-	),
-	tgbotapi.NewInlineKeyboardRow(
-		tgbotapi.NewInlineKeyboardButtonData(Female[0], Female[1]),
-	),
-)
 
-const ask_education_msg = "Укажите пожалуйста ваше образование"
+func (b *Bot) setKeyboards() {
+	baseQuestion[st_gender].key = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(Male[0], Male[1]),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(Female[0], Female[1]),
+		),
+	)
 
-var educationInlineKeyboard tgbotapi.InlineKeyboardMarkup
+	baseQuestion[st_have_ill].key = yesnoInlineKeyboard
+}
 
 func (b *Bot) readEducationFromDb() bool {
 	education := b.dbase.ReadCaption("userEducation")
 	if 3 <= len(education) {
-		educationInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		baseQuestion[st_education].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(education[0][0], education[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(education[1][0], education[1][1]),
@@ -145,14 +155,10 @@ func (b *Bot) readEducationFromDb() bool {
 	return false
 }
 
-const ask_vaccine_msg = "Считаете ли вы что существующие прививки (какие-то лучше, какие-то хуже) помогают предотвратить или облегчить болезнь?"
-
-var vaccineInlineKeyboard tgbotapi.InlineKeyboardMarkup
-
 func (b *Bot) readVaccineFromDb() bool {
 	vaccine := b.dbase.ReadCaption("userVaccineOpinion")
 	if 3 <= len(vaccine) {
-		vaccineInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		baseQuestion[st_vacc_opin].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(vaccine[0][0], vaccine[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(vaccine[1][0], vaccine[1][1]),
@@ -168,14 +174,10 @@ func (b *Bot) readVaccineFromDb() bool {
 	return false
 }
 
-const ask_origin_msg = "Считаете ли вы что новый коронавирус это естественный природный процесс или к его созданию причастны люди?"
-
-var originInlineKeyboard tgbotapi.InlineKeyboardMarkup
-
 func (b *Bot) readOriginFromDb() bool {
 	origin := b.dbase.ReadCaption("userOriginOpinion")
 	if 2 <= len(origin) {
-		originInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		baseQuestion[st_orgn_opin].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(origin[0][0], origin[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(origin[1][0], origin[1][1]),
@@ -188,18 +190,27 @@ func (b *Bot) readOriginFromDb() bool {
 	return false
 }
 
-const ask_haveill_msg = "Считаете ли вы что переболели коронавирусом (возможно не один раз)?"
-const ask_countill_msg = "Введите пожалуйста сколько раз вы переболели коронавирусом"
-const ask_yearill_msg = "Введите год когда переболели "
-const ask_monthill_msg = "Введите месяц когда переболели "
-const ask_signill_msg = "По каким признакам вы определили тогда, что переболели коронавирусом?"
+type SubQuestion struct {
+	ask  string
+	key  interface{}
+	min  int
+	max  int
+	many bool
+}
 
-var signillInlineKeyboard tgbotapi.InlineKeyboardMarkup
+const ask_countill_msg = "Введите пожалуйста сколько раз вы переболели коронавирусом"
+
+var illQuestion = []SubQuestion{
+	{"Введите год когда переболели ", yearInlineKeyboard, 2020, 2022, false},
+	{"Введите месяц когда переболели ", monthInlineKeyboard, 1, 12, false},
+	{"По каким признакам вы определили тогда, что переболели коронавирусом?", nil, 0, 2, false},
+	{"Насколько тяжело протекала болезнь?", nil, 0, 5, false},
+}
 
 func (b *Bot) readIllnessSignFromDb() bool {
 	sign := b.dbase.ReadCaption("illnessSign")
 	if 3 <= len(sign) {
-		signillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		illQuestion[sst_sign].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(sign[0][0], sign[0][1]),
 			),
@@ -216,14 +227,10 @@ func (b *Bot) readIllnessSignFromDb() bool {
 	return false
 }
 
-const ask_degreeill_msg = "Насколько тяжело протекала болезнь?"
-
-var degreeillInlineKeyboard tgbotapi.InlineKeyboardMarkup
-
 func (b *Bot) readIllnessDegreeFromDb() bool {
 	degree := b.dbase.ReadCaption("illnessDegree")
 	if 6 <= len(degree) {
-		degreeillInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		illQuestion[sst_degree].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(degree[0][0], degree[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(degree[1][0], degree[1][1]),
@@ -245,16 +252,18 @@ func (b *Bot) readIllnessDegreeFromDb() bool {
 
 const ask_havevac_msg = "Вы делали вакцинацию от коронавируса?"
 const ask_countvac_msg = "Сколько раз вы вакцинировались?\n(Два укола Спутник-V считаются одним разом)"
-const ask_yearvac_msg = "Введите год когда вакцинировались "
-const ask_monthvac_msg = "Введите месяц когда вакцинировались "
-const ask_kindvac_msg = "Какую вакцину вводили?"
 
-var kindvacInlineKeyboard tgbotapi.InlineKeyboardMarkup
+var vacQuestion = []SubQuestion{
+	{"Введите год когда вакцинировались ", yearInlineKeyboard, 2020, 2022, false},
+	{"Введите месяц когда вакцинировались ", monthInlineKeyboard, 1, 12, false},
+	{"Какую вакцину вводили?", nil, 0, 3, false},
+	{"Насколько сильными были побочные эффекты после вакцины?", nil, 0, 2, false},
+}
 
 func (b *Bot) readVaccineKindFromDb() bool {
 	kind := b.dbase.ReadCaption("vaccineKind")
 	if 4 <= len(kind) {
-		kindvacInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		vacQuestion[sst_kind].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(kind[0][0], kind[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(kind[1][0], kind[1][1]),
@@ -270,14 +279,10 @@ func (b *Bot) readVaccineKindFromDb() bool {
 	return false
 }
 
-const ask_effectvac_msg = "Насколько сильными были побочные эффекты после вакцины?"
-
-var effectvacInlineKeyboard tgbotapi.InlineKeyboardMarkup
-
 func (b *Bot) readVaccineEffectFromDb() bool {
 	effect := b.dbase.ReadCaption("vaccineEffect")
 	if 3 <= len(effect) {
-		effectvacInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		vacQuestion[sst_effect].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(effect[0][0], effect[0][1]),
 			),
