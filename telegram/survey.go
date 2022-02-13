@@ -42,12 +42,19 @@ type UserSession struct {
 	userID, chatID int64
 	userName       string
 	userChan       chan string
+	userStop       chan struct{}
 	userData       user.UserData
 	userSub        [4]int
 }
 
 func MakeSession(b *Bot, userID, chatID int64, userName string) *UserSession {
-	return &UserSession{b, 0, 0, 0, userID, chatID, userName, make(chan string, 10), user.MakeUser(), user.MakeSubUser()}
+	return &UserSession{b,
+		0, 0, 0,
+		userID, chatID, userName,
+		make(chan string, 10),
+		make(chan struct{}),
+		user.MakeUser(),
+		user.MakeSubUser()}
 }
 
 func (s *UserSession) startSurvey() bool {
@@ -171,53 +178,49 @@ func (s *UserSession) getAnswer(userData string) bool {
 
 	switch s.state {
 	case st_birth, st_gender, st_education, st_vacc_opin, st_orgn_opin, st_have_ill:
-		val, _ := strconv.Atoi(userData)
+		val, err := strconv.Atoi(userData)
 		idx := s.state - 1
-		if baseQuestion[idx].min <= val && val <= baseQuestion[idx].max {
-			s.userData.Base[idx] = val
-		} else {
+		if err != nil || val < baseQuestion[idx].min || baseQuestion[idx].max < val {
 			ok = false
+		} else {
+			s.userData.Base[idx] = val
 		}
 	case st_get_have_ill, st_get_have_vac:
-		val, _ := strconv.Atoi(userData)
-		if val == 0 || val == 1 {
+		val, err := strconv.Atoi(userData)
+		if err != nil || val != 0 && val != 1 {
+			ok = false
+		} else {
 			if s.state == st_get_have_ill {
 				s.userData.CountIll = val
 			} else {
 				s.userData.CountVac = val
 			}
-		} else {
-			ok = false
 		}
 	case st_get_count_ill, st_get_count_vac:
-		val, _ := strconv.Atoi(userData)
-		if 0 < val && val <= 3 {
+		val, err := strconv.Atoi(userData)
+		if err != nil || val < 0 || 3 < val {
+			ok = false
+		} else {
 			if s.state == st_get_count_ill {
 				s.userData.CountIll = val
 			} else {
 				s.userData.CountVac = val
 			}
-		} else {
-			ok = false
 		}
 	case st_illness, st_vaccination:
-		val, _ := strconv.Atoi(userData)
+		val, err := strconv.Atoi(userData)
 		idx := s.subState - 1
 		subQuestion := illQuestion
 		if s.state == st_vaccination {
 			subQuestion = vacQuestion
 		}
-		if subQuestion[idx].min <= val && val <= subQuestion[idx].max {
-			s.userSub[idx] = val
-		} else {
+		if err != nil || val < subQuestion[idx].min || subQuestion[idx].max < val {
 			ok = false
+		} else {
+			s.userSub[idx] = val
 		}
 	}
 
-	if !ok {
-		msg := tgbotapi.NewMessage(s.chatID, error_msg+error_ans)
-		s.b.bot.Send(msg)
-	}
 	return ok
 }
 
@@ -250,18 +253,23 @@ func (s *UserSession) exit() {
 	delete(user_session, s.userID)
 }
 
-func (s *UserSession) RunSurvey(ch chan string) {
+func (s *UserSession) RunSurvey(ch chan string, quit chan struct{}) {
 	defer s.exit()
+	run := 1
 	if s.startSurvey() {
 		s.sendQuestion(baseQuestion[st_country].ask, baseQuestion[st_country].key)
-		for {
-			data := <-ch
-			if !s.getAnswer(data) {
-				s.abort()
+		for run != 0 {
+			select {
+			case <-quit:
 				return
-			}
-			if !s.sendRequest() {
-				break
+			case data := <-ch:
+				if !s.getAnswer(data) {
+					s.abort()
+					return
+				}
+				if !s.sendRequest() {
+					run = 0
+				}
 			}
 		}
 		s.writeResult()
