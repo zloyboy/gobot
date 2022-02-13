@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/zloyboy/gobot/user"
 
@@ -85,7 +86,7 @@ func (dbase *Dbase) Insert(
 	teleId int64,
 	date string,
 	name string,
-	user user.UserData) error {
+	usr user.UserData) error {
 
 	tx, _ := dbase.db.Begin()
 	defer tx.Rollback()
@@ -94,34 +95,37 @@ func (dbase *Dbase) Insert(
 		"(teleId, created, modified, name, country, birth, gender, education, vaccineOpinion, originOpinion, countIll, countVac)" +
 		"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	defer stmt.Close()
-	stmt.Exec(teleId, date, date, name, user.Base[idx_country], user.Base[idx_birth], user.Base[idx_gender],
-		user.Base[idx_education], user.Base[idx_vacc_opin], user.Base[idx_orgn_opin], user.CountIll, user.CountVac)
+	stmt.Exec(teleId, date, date, name, usr.Base[idx_country], usr.Base[idx_birth], usr.Base[idx_gender],
+		usr.Base[idx_education], usr.Base[idx_vacc_opin], usr.Base[idx_orgn_opin], usr.CountIll, usr.CountVac)
 
-	for i := 0; i < user.CountIll; i++ {
-		stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month, sign, degree) values(?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, user.Ill[i][idx_year], user.Ill[i][idx_month], user.Ill[i][idx_sign], user.Ill[i][idx_degree])
+	age_group := user.GetAgeGroup(time.Now().Year() - usr.Base[idx_birth])
+	haveIll := 0
+	if 0 < usr.CountIll {
+		haveIll = 1
+	}
+	haveVac := 0
+	if 0 < usr.CountVac {
+		haveVac = 1
 	}
 
-	for i := 0; i < user.CountVac; i++ {
-		stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month, kind, effect) values(?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, user.Vac[i][idx_year], user.Vac[i][idx_month], user.Vac[i][idx_kind], user.Vac[i][idx_effect])
+	stmt, _ = tx.Prepare("INSERT INTO userAgeGroup (id, created, teleId, ill_count, vac_count, age_group) values(?, ?, ?, ?, ?, ?)")
+	stmt.Exec(nil, date, teleId, haveIll, haveVac, age_group)
+
+	for i := 0; i < usr.CountIll; i++ {
+		age_group := user.GetAgeGroup(usr.Ill[i][idx_year] - usr.Base[idx_birth])
+		stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month, sign, degree, age_group) values(?, ?, ?, ?, ?, ?, ?, ?)")
+		stmt.Exec(nil, date, teleId, usr.Ill[i][idx_year], usr.Ill[i][idx_month], usr.Ill[i][idx_sign], usr.Ill[i][idx_degree], age_group)
+	}
+
+	for i := 0; i < usr.CountVac; i++ {
+		age_group := user.GetAgeGroup(usr.Vac[i][idx_year] - usr.Base[idx_birth])
+		stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month, kind, effect, age_group) values(?, ?, ?, ?, ?, ?, ?, ?)")
+		stmt.Exec(nil, date, teleId, usr.Vac[i][idx_year], usr.Vac[i][idx_month], usr.Vac[i][idx_kind], usr.Vac[i][idx_effect], age_group)
 	}
 
 	tx.Commit()
 
 	return nil
-}
-
-func (dbase *Dbase) CountUsers() int {
-	var count = 0
-	dbase.db.QueryRow("SELECT count(*) FROM user").Scan(&count)
-	return count
-}
-
-func (dbase *Dbase) CountIll() int {
-	var res = 0
-	dbase.db.QueryRow("SELECT count(*) FROM user WHERE 0<countIll").Scan(&res)
-	return res
 }
 
 func (dbase *Dbase) ReadCaption(table string, arg ...int) [][2]string {
@@ -154,4 +158,33 @@ func (dbase *Dbase) ReadCaption(table string, arg ...int) [][2]string {
 	}
 
 	return caps
+}
+
+func (dbase *Dbase) ReadCountAge() (int, int, int, [6][3]int) {
+	var cntAll, cntIll, cntVac int
+	var stat [6][3]int
+
+	rows, _ := dbase.db.Query("SELECT age_group, ill_count, vac_count, COUNT(*) FROM userAgeGroup GROUP BY age_group, ill_count, vac_count;")
+	defer rows.Close()
+
+	ageGrp, ill, vac, count := 0, 0, 0, 0
+	for rows.Next() {
+		err := rows.Scan(&ageGrp, &ill, &vac, &count)
+		if err != nil {
+			break
+		}
+		stat[ageGrp][0] += count
+		cntAll += count
+		if ill == 1 {
+			stat[ageGrp][1] += count
+			cntIll += count
+		}
+		if vac == 1 {
+			stat[ageGrp][2] += count
+			cntVac += count
+		}
+	}
+
+	//log.Println(cntAll, cntIll, cntVac, stat)
+	return cntAll, cntIll, cntVac, stat
 }

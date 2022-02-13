@@ -15,6 +15,16 @@ create table if not exists user(
 
 create index if not exists name_index on user (name);
 
+create table if not exists userAgeGroup(
+    id integer primary key,
+    created datetime,
+    teleId integer not null,
+    ill_count integer not null,
+    vac_count integer not null,
+    age_group integer not null,
+    FOREIGN KEY(teleId) REFERENCES user(teleId)
+);
+
 create table if not exists userIllness(
     id integer primary key,
     created datetime,
@@ -23,6 +33,7 @@ create table if not exists userIllness(
     month integer not null,
     sign integer not null,
     degree integer not null,
+    age_group integer not null,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
 
@@ -34,6 +45,7 @@ create table if not exists userVaccine(
     month integer not null,
     kind integer not null,
     effect integer not null,
+    age_group integer not null,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
 

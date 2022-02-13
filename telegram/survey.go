@@ -57,7 +57,8 @@ func (s *UserSession) startSurvey() bool {
 	uname, err := s.b.dbase.CheckIdName(s.userID)
 	if err == nil {
 		// exist user - send statistic
-		msg.Text = s.b.stat.MakeStatic() + "\nВы уже приняли участие в подсчете под именем " + uname + repeat_msg
+		msg.Text = "\nВы уже приняли участие в подсчете под именем " + uname +
+			"\n--------------------\n" + s.b.stat.MakeStatic() + repeat_msg
 		msg.ReplyMarkup = startKeyboard
 		res = false
 	} else {
@@ -230,7 +231,7 @@ func (s *UserSession) writeResult() {
 		time.Now().Local().Format("2006-01-02 15:04:05"),
 		s.userName,
 		s.userData)
-	s.b.stat.RefreshStatic(s.userData.CountIll)
+	s.b.stat.RefreshStatic(s.userData)
 	msg.Text = s.b.stat.MakeStatic() + repeat_msg
 	msg.ReplyMarkup = startKeyboard
 

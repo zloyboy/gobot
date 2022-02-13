@@ -36,3 +36,22 @@ func MakeUser() UserData {
 func MakeSubUser() [4]int {
 	return [4]int{-1, -1, -1, -1}
 }
+
+func GetAgeGroup(age int) int {
+	switch {
+	case age < 20:
+		return 0
+	case 20 <= age && age < 30:
+		return 1
+	case 30 <= age && age < 40:
+		return 2
+	case 40 <= age && age < 50:
+		return 3
+	case 50 <= age && age < 60:
+		return 4
+	case 60 <= age:
+		return 5
+	default:
+		return -1
+	}
+}
