@@ -108,19 +108,19 @@ func (dbase *Dbase) Insert(
 		haveVac = 1
 	}
 
-	stmt, _ = tx.Prepare("INSERT INTO userAgeGroup (id, created, teleId, ill_count, vac_count, age_group) values(?, ?, ?, ?, ?, ?)")
+	stmt, _ = tx.Prepare("INSERT INTO userAgeGroup (id, created, teleId, have_ill, have_vac, age_group) values(?, ?, ?, ?, ?, ?)")
 	stmt.Exec(nil, date, teleId, haveIll, haveVac, age_group)
 
 	for i := 0; i < usr.CountIll; i++ {
-		age_group := user.GetAgeGroup(usr.Ill[i][idx_year] - usr.Base[idx_birth])
-		stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month, sign, degree, age_group) values(?, ?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, usr.Ill[i][idx_year], usr.Ill[i][idx_month], usr.Ill[i][idx_sign], usr.Ill[i][idx_degree], age_group)
+		age := usr.Ill[i][idx_year] - usr.Base[idx_birth]
+		stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month, sign, degree, age) values(?, ?, ?, ?, ?, ?, ?, ?)")
+		stmt.Exec(nil, date, teleId, usr.Ill[i][idx_year], usr.Ill[i][idx_month], usr.Ill[i][idx_sign], usr.Ill[i][idx_degree], age)
 	}
 
 	for i := 0; i < usr.CountVac; i++ {
-		age_group := user.GetAgeGroup(usr.Vac[i][idx_year] - usr.Base[idx_birth])
-		stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month, kind, effect, age_group) values(?, ?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, usr.Vac[i][idx_year], usr.Vac[i][idx_month], usr.Vac[i][idx_kind], usr.Vac[i][idx_effect], age_group)
+		age := usr.Vac[i][idx_year] - usr.Base[idx_birth]
+		stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month, kind, effect, age) values(?, ?, ?, ?, ?, ?, ?, ?)")
+		stmt.Exec(nil, date, teleId, usr.Vac[i][idx_year], usr.Vac[i][idx_month], usr.Vac[i][idx_kind], usr.Vac[i][idx_effect], age)
 	}
 
 	tx.Commit()
@@ -164,7 +164,7 @@ func (dbase *Dbase) ReadCountAge() (int, int, int, [6][3]int) {
 	var cntAll, cntIll, cntVac int
 	var stat [6][3]int
 
-	rows, _ := dbase.db.Query("SELECT age_group, ill_count, vac_count, COUNT(*) FROM userAgeGroup GROUP BY age_group, ill_count, vac_count;")
+	rows, _ := dbase.db.Query("SELECT age_group, have_ill, have_vac, COUNT(*) FROM userAgeGroup GROUP BY age_group, have_ill, have_vac;")
 	defer rows.Close()
 
 	ageGrp, ill, vac, count := 0, 0, 0, 0

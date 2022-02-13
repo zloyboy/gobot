@@ -111,7 +111,7 @@ func (s *UserSession) sendRequest() bool {
 		s.sendQuestion(baseQuestion[s.state].ask, baseQuestion[s.state].key)
 	case st_get_have_ill:
 		if 0 < s.userData.CountIll {
-			s.sendQuestion(ask_countill_msg, nil)
+			s.sendQuestion(ask_countill_msg, numInlineKeyboard)
 		} else {
 			s.nextStep()
 			s.nextStep()
@@ -138,7 +138,7 @@ func (s *UserSession) sendRequest() bool {
 		}
 	case st_get_have_vac:
 		if 0 < s.userData.CountVac {
-			s.sendQuestion(ask_countvac_msg, nil)
+			s.sendQuestion(ask_countvac_msg, numInlineKeyboard)
 		} else {
 			return false
 		}
@@ -191,7 +191,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		}
 	case st_get_count_ill, st_get_count_vac:
 		val, _ := strconv.Atoi(userData)
-		if 0 < val && val < 5 {
+		if 0 < val && val <= 3 {
 			if s.state == st_get_count_ill {
 				s.userData.CountIll = val
 			} else {

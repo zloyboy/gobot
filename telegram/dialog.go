@@ -28,7 +28,7 @@ var (
 		{"Введите пожалуйста год рождения", nil, 1920, 2020},
 		{"Укажите пожалуйста ваш пол", nil, 0, 1},
 		{"Укажите пожалуйста ваше образование", nil, 0, 2},
-		{"Считаете ли вы что существующие прививки (какие-то лучше, какие-то хуже) помогают предотвратить или облегчить болезнь?", nil, -1, 2},
+		{"Считаете ли вы что существующие прививки (российские и ииностранные) какие-то лучше, какие-то хуже, но помогают предотвратить или облегчить болезнь?", nil, -1, 2},
 		{"Считаете ли вы что новый коронавирус это естественный природный процесс или к его созданию причастны люди?", nil, -1, 1},
 		{"Считаете ли вы что переболели коронавирусом (возможно не один раз)?", nil, 0, 0},
 	}
@@ -40,9 +40,15 @@ var (
 	yesnoInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(Yes[0], Yes[1]),
-		),
-		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(No[0], No[1]),
+		),
+	)
+
+	numInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("1", "1"),
+			tgbotapi.NewInlineKeyboardButtonData("2", "2"),
+			tgbotapi.NewInlineKeyboardButtonData("3", "3"),
 		),
 	)
 )
@@ -128,8 +134,6 @@ func (b *Bot) setKeyboards() {
 	baseQuestion[st_gender].key = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(Male[0], Male[1]),
-		),
-		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData(Female[0], Female[1]),
 		),
 	)
@@ -231,14 +235,20 @@ func (b *Bot) readIllnessDegreeFromDb() bool {
 		illQuestion[sst_degree].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(degree[0][0], degree[0][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(degree[1][0], degree[1][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(degree[2][0], degree[2][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(degree[3][0], degree[3][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(degree[4][0], degree[4][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(degree[5][0], degree[5][1]),
 			),
 		)

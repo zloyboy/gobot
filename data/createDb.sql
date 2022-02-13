@@ -19,8 +19,8 @@ create table if not exists userAgeGroup(
     id integer primary key,
     created datetime,
     teleId integer not null,
-    ill_count integer not null,
-    vac_count integer not null,
+    have_ill integer not null,
+    have_vac integer not null,
     age_group integer not null,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
@@ -33,7 +33,7 @@ create table if not exists userIllness(
     month integer not null,
     sign integer not null,
     degree integer not null,
-    age_group integer not null,
+    age integer not null,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
 
@@ -45,7 +45,7 @@ create table if not exists userVaccine(
     month integer not null,
     kind integer not null,
     effect integer not null,
-    age_group integer not null,
+    age integer not null,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
 
@@ -84,9 +84,12 @@ create table if not exists illnessDegree(
     rus string
 );
 insert into illnessDegree (rus) values
-    ("Лежал(а) под ИВЛ"), ("Лежал(а) в больнице"),
-    ("Лежал(а) дома, тяжело"), ("Лежал(а) дома, средне"),
-    ("Перенес(ла) на ногах"), ("Перенес(ла) без симптомов");
+    ("Критически: лежал(а) под ИВЛ"),
+    ("Тяжело: лежал(а) в больнице"),
+    ("Болел(а) дома: боль/температура"),
+    ("Болел(а) дома: недомогание"),
+    ("Перенес(ла) на ногах"),
+    ("Перенес(ла) без симптомов");
 
 create table if not exists vaccineKind(
     id integer primary key,
