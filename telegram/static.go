@@ -55,7 +55,7 @@ func (s *Static) MakeStatic() string {
 }
 
 func (s *Static) RefreshStatic(usr user.UserData) {
-	ageGrp := user.GetAgeGroup(time.Now().Year() - usr.Base[st_birth])
+	ageGrp := user.GetAgeGroup(time.Now().Year() - usr.Base[idx_birth])
 	haveIll := 0
 	if 0 < usr.CountIll {
 		haveIll = 1

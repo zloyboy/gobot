@@ -25,7 +25,7 @@ type BaseQuestion struct {
 var (
 	baseQuestion = []BaseQuestion{
 		{"Укажите пожалуйста страну проживания", nil, 0, 3},
-		{"Введите пожалуйста год рождения", nil, 1920, 2020},
+		{"Введите пожалуйста год рождения\n(кнопками либо в поле ввода)", nil, 0, 9},
 		{"Укажите пожалуйста ваш пол", nil, 0, 1},
 		{"Укажите пожалуйста ваше образование", nil, 0, 2},
 		{"Считаете ли вы что существующие прививки (российские и иностранные) какие-то лучше, какие-то хуже, но помогают предотвратить или облегчить болезнь?", nil, -1, 2},
@@ -47,11 +47,31 @@ var (
 		),
 	)
 
-	numInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	countInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("1", "1"),
+			tgbotapi.NewInlineKeyboardButtonData("2", "2"),
+			tgbotapi.NewInlineKeyboardButtonData("3 и более", "3"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			cancelButton,
+		),
+	)
+
+	digitInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("1", "1"),
 			tgbotapi.NewInlineKeyboardButtonData("2", "2"),
 			tgbotapi.NewInlineKeyboardButtonData("3", "3"),
+			tgbotapi.NewInlineKeyboardButtonData("4", "4"),
+			tgbotapi.NewInlineKeyboardButtonData("5", "5"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("6", "6"),
+			tgbotapi.NewInlineKeyboardButtonData("7", "7"),
+			tgbotapi.NewInlineKeyboardButtonData("8", "8"),
+			tgbotapi.NewInlineKeyboardButtonData("9", "9"),
+			tgbotapi.NewInlineKeyboardButtonData("0", "0"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			cancelButton,
@@ -125,7 +145,7 @@ var startKeyboard = tgbotapi.NewReplyKeyboard(
 func (b *Bot) readCountryFromDb() bool {
 	country := b.dbase.ReadCaption("userCountry")
 	if 4 <= len(country) {
-		baseQuestion[st_country].key = tgbotapi.NewInlineKeyboardMarkup(
+		baseQuestion[idx_country].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(country[0][0], country[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(country[1][0], country[1][1]),
@@ -144,27 +164,26 @@ func (b *Bot) readCountryFromDb() bool {
 	return false
 }
 
-var Male = [2]string{"Мужской", "1"}
-var Female = [2]string{"Женский", "0"}
-
 func (b *Bot) setKeyboards() {
-	baseQuestion[st_gender].key = tgbotapi.NewInlineKeyboardMarkup(
+	baseQuestion[idx_birth].key = digitInlineKeyboard
+
+	baseQuestion[idx_gender].key = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData(Male[0], Male[1]),
-			tgbotapi.NewInlineKeyboardButtonData(Female[0], Female[1]),
+			tgbotapi.NewInlineKeyboardButtonData("Мужской", "1"),
+			tgbotapi.NewInlineKeyboardButtonData("Женский", "0"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			cancelButton,
 		),
 	)
 
-	baseQuestion[st_have_ill].key = yesnoInlineKeyboard
+	baseQuestion[idx_have_ill].key = yesnoInlineKeyboard
 }
 
 func (b *Bot) readEducationFromDb() bool {
 	education := b.dbase.ReadCaption("userEducation")
 	if 3 <= len(education) {
-		baseQuestion[st_education].key = tgbotapi.NewInlineKeyboardMarkup(
+		baseQuestion[idx_education].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(education[0][0], education[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(education[1][0], education[1][1]),
@@ -183,7 +202,7 @@ func (b *Bot) readEducationFromDb() bool {
 func (b *Bot) readVaccOpinionFromDb() bool {
 	vaccine := b.dbase.ReadCaption("userVaccineOpinion")
 	if 3 <= len(vaccine) {
-		baseQuestion[st_vacc_opin].key = tgbotapi.NewInlineKeyboardMarkup(
+		baseQuestion[idx_vacc_opin].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(vaccine[0][0], vaccine[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(vaccine[1][0], vaccine[1][1]),
@@ -205,7 +224,7 @@ func (b *Bot) readVaccOpinionFromDb() bool {
 func (b *Bot) readOrgnOpinionFromDb() bool {
 	origin := b.dbase.ReadCaption("userOriginOpinion")
 	if 2 <= len(origin) {
-		baseQuestion[st_orgn_opin].key = tgbotapi.NewInlineKeyboardMarkup(
+		baseQuestion[idx_orgn_opin].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(origin[0][0], origin[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(origin[1][0], origin[1][1]),

@@ -29,12 +29,6 @@ func (t *TimeStamp) GetStamp(key int64) (int64, bool) {
 	return val, ok
 }
 
-func (t *TimeStamp) ResetStamp(key int64) {
-	t.mx.Lock()
-	t.stamp[key] = 0
-	t.mx.Unlock()
-}
-
 func (t *TimeStamp) UserTimeout(id int64) bool {
 	curr_time := time.Now().Unix()
 	if tstamp, ok := t.GetStamp(id); ok && 0 < tstamp {
@@ -43,6 +37,7 @@ func (t *TimeStamp) UserTimeout(id int64) bool {
 			return true
 		}
 	}
+	//log.Printf("Timestamp %d", curr_time)
 	t.SetStamp(id, curr_time)
 	return false
 }

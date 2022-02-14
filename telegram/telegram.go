@@ -49,8 +49,10 @@ func (b *Bot) Run() {
 		}
 
 		userID := update.SentFrom().ID
-		if b.utime.UserTimeout(userID) {
-			continue
+		if _, ok := user_session[userID]; !ok {
+			if b.utime.UserTimeout(userID) {
+				continue
+			}
 		}
 
 		var userData string
