@@ -7,7 +7,9 @@ import (
 )
 
 const (
-	abort_msg = "Опрос завершен из-за ошибки. Попробуйте начать сначала, но не ранее чем через 10 секунд"
+	error_msg = "Опрос завершен из-за ошибки. "
+	stop_msg  = "Вы отменили опрос. "
+	again_msg = "Вы можете начать сначала, но не ранее чем через 10 секунд"
 	start_msg = "Этот опрос создан для независимого сбора информации по пандемии коронавируса в РФ и странах СНГ. " +
 		"После прохождения опроса вам будет доступна собранная статистика."
 	repeat_msg = "\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
@@ -40,6 +42,9 @@ var (
 			tgbotapi.NewInlineKeyboardButtonData(Yes[0], Yes[1]),
 			tgbotapi.NewInlineKeyboardButtonData(No[0], No[1]),
 		),
+		tgbotapi.NewInlineKeyboardRow(
+			cancelButton,
+		),
 	)
 
 	numInlineKeyboard = tgbotapi.NewInlineKeyboardMarkup(
@@ -48,7 +53,12 @@ var (
 			tgbotapi.NewInlineKeyboardButtonData("2", "2"),
 			tgbotapi.NewInlineKeyboardButtonData("3", "3"),
 		),
+		tgbotapi.NewInlineKeyboardRow(
+			cancelButton,
+		),
 	)
+
+	cancelButton = tgbotapi.NewInlineKeyboardButtonData("Отменить опрос", "stop")
 )
 
 func (b *Bot) readYearFromDb() bool {
@@ -59,6 +69,9 @@ func (b *Bot) readYearFromDb() bool {
 				tgbotapi.NewInlineKeyboardButtonData(year[0][0], year[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(year[1][0], year[1][1]),
 				tgbotapi.NewInlineKeyboardButtonData(year[2][0], year[2][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
 			),
 		)
 		illQuestion[sst_year].key = yearInlineKeyboard
@@ -91,6 +104,9 @@ func (b *Bot) readMonthFromDb() bool {
 				tgbotapi.NewInlineKeyboardButtonData(month[10][0], month[10][1]),
 				tgbotapi.NewInlineKeyboardButtonData(month[11][0], month[11][1]),
 			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
+			),
 		)
 		illQuestion[sst_month].key = monthInlineKeyboard
 		vacQuestion[sst_month].key = monthInlineKeyboard
@@ -118,6 +134,9 @@ func (b *Bot) readCountryFromDb() bool {
 				tgbotapi.NewInlineKeyboardButtonData(country[2][0], country[2][1]),
 				tgbotapi.NewInlineKeyboardButtonData(country[3][0], country[3][1]),
 			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
+			),
 		)
 		return true
 	}
@@ -134,6 +153,9 @@ func (b *Bot) setKeyboards() {
 			tgbotapi.NewInlineKeyboardButtonData(Male[0], Male[1]),
 			tgbotapi.NewInlineKeyboardButtonData(Female[0], Female[1]),
 		),
+		tgbotapi.NewInlineKeyboardRow(
+			cancelButton,
+		),
 	)
 
 	baseQuestion[st_have_ill].key = yesnoInlineKeyboard
@@ -147,6 +169,9 @@ func (b *Bot) readEducationFromDb() bool {
 				tgbotapi.NewInlineKeyboardButtonData(education[0][0], education[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(education[1][0], education[1][1]),
 				tgbotapi.NewInlineKeyboardButtonData(education[2][0], education[2][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
 			),
 		)
 		return true
@@ -167,6 +192,9 @@ func (b *Bot) readVaccOpinionFromDb() bool {
 				tgbotapi.NewInlineKeyboardButtonData(vaccine[2][0], vaccine[2][1]),
 				tgbotapi.NewInlineKeyboardButtonData(Unknown[0], Unknown[1]),
 			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
+			),
 		)
 		return true
 	}
@@ -182,6 +210,9 @@ func (b *Bot) readOrgnOpinionFromDb() bool {
 				tgbotapi.NewInlineKeyboardButtonData(origin[0][0], origin[0][1]),
 				tgbotapi.NewInlineKeyboardButtonData(origin[1][0], origin[1][1]),
 				tgbotapi.NewInlineKeyboardButtonData(Unknown[0], Unknown[1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
 			),
 		)
 		return true
@@ -220,6 +251,9 @@ func (b *Bot) readIllnessSignFromDb() bool {
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(sign[2][0], sign[2][1]),
 			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
+			),
 		)
 		return true
 	}
@@ -248,6 +282,9 @@ func (b *Bot) readIllnessDegreeFromDb() bool {
 			),
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(degree[5][0], degree[5][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
 			),
 		)
 		return true
@@ -278,6 +315,9 @@ func (b *Bot) readVaccineKindFromDb() bool {
 				tgbotapi.NewInlineKeyboardButtonData(kind[2][0], kind[2][1]),
 				tgbotapi.NewInlineKeyboardButtonData(kind[3][0], kind[3][1]),
 			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
+			),
 		)
 		return true
 	}
@@ -297,6 +337,9 @@ func (b *Bot) readVaccineEffectFromDb() bool {
 			),
 			tgbotapi.NewInlineKeyboardRow(
 				tgbotapi.NewInlineKeyboardButtonData(effect[2][0], effect[2][1]),
+			),
+			tgbotapi.NewInlineKeyboardRow(
+				cancelButton,
 			),
 		)
 		return true

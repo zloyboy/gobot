@@ -241,8 +241,8 @@ func (s *UserSession) writeResult() {
 	s.b.bot.Send(msg)
 }
 
-func (s *UserSession) abort() {
-	msg := tgbotapi.NewMessage(s.chatID, abort_msg)
+func (s *UserSession) abort(reason string) {
+	msg := tgbotapi.NewMessage(s.chatID, reason+again_msg)
 	msg.ReplyMarkup = startKeyboard
 	s.b.bot.Send(msg)
 }
@@ -261,10 +261,11 @@ func (s *UserSession) RunSurvey(ch chan string, quit chan struct{}) {
 		for run != 0 {
 			select {
 			case <-quit:
+				s.abort(stop_msg)
 				return
 			case data := <-ch:
 				if !s.getAnswer(data) {
-					s.abort()
+					s.abort(error_msg)
 					return
 				}
 				if !s.sendRequest() {
