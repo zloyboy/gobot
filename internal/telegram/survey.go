@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -24,6 +25,7 @@ const (
 	st_get_have_vac
 	st_get_count_vac
 	st_vaccination
+	st_check_result
 )
 
 const (
@@ -171,7 +173,9 @@ func (s *UserSession) sendRequest() bool {
 		if 0 < s.userData.CountVac {
 			s.sendQuestion(ask_countvac_msg, countInlineKeyboard)
 		} else {
-			return false
+			s.nextStep()
+			s.nextStep()
+			s.checkResult()
 		}
 	case st_get_count_vac:
 		s.count = 0
@@ -189,9 +193,11 @@ func (s *UserSession) sendRequest() bool {
 			if s.count < s.userData.CountVac {
 				s.sendSubQuestion(&vacQuestion[s.subState], s.userData.CountVac)
 			} else {
-				return false
+				s.checkResult()
 			}
 		}
+	case st_check_result:
+		return false
 	}
 
 	return true
@@ -273,9 +279,71 @@ func (s *UserSession) getAnswer(userData string) bool {
 		} else {
 			s.userSub[idx] = val
 		}
+	case st_check_result:
+		val, err := strconv.Atoi(userData)
+		if err != nil || val != 1 {
+			ok = false
+		}
 	}
 
 	return ok
+}
+
+func (s *UserSession) checkResult() {
+	msg := tgbotapi.NewMessage(s.chatID, "")
+
+	idx_country := s.userData.Base[st_country]
+	birth_year := s.userData.Base[st_birth]
+	idx_gender := s.userData.Base[st_gender]
+	idx_education := s.userData.Base[st_education]
+	idx_vacc_opin := s.userData.Base[st_vacc_opin]
+	idx_orgn_opin := s.userData.Base[st_orgn_opin]
+
+	msg.Text = "Корректны ли введенные вами данные?" +
+		"\n--------------------" +
+		"\nСтрана: " + country[idx_country][0] +
+		"\nГод рождения: " + strconv.Itoa(birth_year) +
+		"\nПол: " + gender[idx_gender][0] +
+		"\nОбразование: " + education[idx_education][0] +
+		"\nПрививки: " + vaccine[idx_vacc_opin][0] +
+		"\nПроисхождение вируса: " + origin[idx_orgn_opin][0] +
+		"\n--------------------"
+
+	if 0 < s.userData.CountIll {
+		msg.Text += fmt.Sprintf("\nБолел(а) %d раз(а)", s.userData.CountIll)
+		for i := 0; i < s.userData.CountIll; i++ {
+			ill_year := s.userData.Ill[i][sst_year]
+			idx_month := s.userData.Ill[i][sst_month] - 1
+			msg.Text += fmt.Sprintf("\n%dй раз: %d %s", i+1, ill_year, month[idx_month][0])
+			idx_sign := s.userData.Ill[i][sst_sign]
+			msg.Text += "\nПризнаки: " + ill_sign[idx_sign][0]
+			idx_degree := s.userData.Ill[i][sst_degree]
+			msg.Text += "\nТяжесть: " + ill_degree[idx_degree][0]
+		}
+	} else {
+		msg.Text += "\nНе болел(а)"
+	}
+
+	msg.Text += "\n--------------------"
+
+	if 0 < s.userData.CountVac {
+		msg.Text += fmt.Sprintf("\nВакцинирован(а) %d раз(а)", s.userData.CountVac)
+		for i := 0; i < s.userData.CountVac; i++ {
+			vac_year := s.userData.Vac[i][sst_year]
+			idx_month := s.userData.Vac[i][sst_month] - 1
+			msg.Text += fmt.Sprintf("\n%dй раз: %d %s", i+1, vac_year, month[idx_month][0])
+			idx_kind := s.userData.Vac[i][sst_kind]
+			msg.Text += "\nВакцина: " + vac_kind[idx_kind][0]
+			idx_effect := s.userData.Vac[i][sst_effect]
+			msg.Text += "\nПобочки: " + vac_effect[idx_effect][0]
+		}
+	} else {
+		msg.Text += "\nНе вакцинирован(а)"
+	}
+
+	msg.ReplyMarkup = yesnoInlineKeyboard
+	s.b.bot.Send(msg)
+	s.nextStep()
 }
 
 func (s *UserSession) writeResult() {

@@ -12,7 +12,7 @@ const (
 	again_msg = "Вы можете начать сначала, но не ранее чем через 10 секунд"
 	start_msg = "Этот опрос создан для независимого сбора информации по пандемии коронавируса в РФ и странах СНГ. " +
 		"\nПосле прохождения опроса вам будет доступна собранная статистика."
-	thank_msg = "Спасибо за то что приняли участие в опросе!!!" +
+	thank_msg = "Спасибо за участие в опросе!" +
 		"\nПолученные данные помогут в построении более точной картины пандемии"
 	repeat_msg = "\nВедутся работы над отображением более полной статистики\n" +
 		"\nДля повторного показа статистики введите любой текст или нажмите Start, но не ранее чем через 10 секунд"
@@ -82,6 +82,17 @@ var (
 	)
 
 	cancelButton = tgbotapi.NewInlineKeyboardButtonData("Отменить опрос", "stop")
+
+	gender     = [2][2]string{{"Женский", "0"}, {"Мужской", "1"}}
+	country    [][2]string
+	education  [][2]string
+	vaccine    [][2]string
+	origin     [][2]string
+	ill_sign   [][2]string
+	ill_degree [][2]string
+	vac_kind   [][2]string
+	vac_effect [][2]string
+	month      [][2]string
 )
 
 func (b *Bot) readYearFromDb() bool {
@@ -106,7 +117,7 @@ func (b *Bot) readYearFromDb() bool {
 }
 
 func (b *Bot) readMonthFromDb() bool {
-	month := b.dbase.ReadCaption("month", 1) // months start with 01
+	month = b.dbase.ReadCaption("month", 1) // months start with 01
 	if len(month) == 12 {
 		monthInlineKeyboard := tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
@@ -145,8 +156,24 @@ var startKeyboard = tgbotapi.NewReplyKeyboard(
 	),
 )
 
+func (b *Bot) setKeyboards() {
+	baseQuestion[st_birth].key = digitInlineKeyboard
+
+	baseQuestion[st_gender].key = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(gender[1][0], gender[1][1]),
+			tgbotapi.NewInlineKeyboardButtonData(gender[0][0], gender[0][1]),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			cancelButton,
+		),
+	)
+
+	baseQuestion[st_have_ill].key = yesnoInlineKeyboard
+}
+
 func (b *Bot) readCountryFromDb() bool {
-	country := b.dbase.ReadCaption("userCountry")
+	country = b.dbase.ReadCaption("userCountry")
 	if 4 <= len(country) {
 		baseQuestion[st_country].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
@@ -167,24 +194,8 @@ func (b *Bot) readCountryFromDb() bool {
 	return false
 }
 
-func (b *Bot) setKeyboards() {
-	baseQuestion[st_birth].key = digitInlineKeyboard
-
-	baseQuestion[st_gender].key = tgbotapi.NewInlineKeyboardMarkup(
-		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Мужской", "1"),
-			tgbotapi.NewInlineKeyboardButtonData("Женский", "0"),
-		),
-		tgbotapi.NewInlineKeyboardRow(
-			cancelButton,
-		),
-	)
-
-	baseQuestion[st_have_ill].key = yesnoInlineKeyboard
-}
-
 func (b *Bot) readEducationFromDb() bool {
-	education := b.dbase.ReadCaption("userEducation")
+	education = b.dbase.ReadCaption("userEducation")
 	if 3 <= len(education) {
 		baseQuestion[st_education].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
@@ -203,7 +214,7 @@ func (b *Bot) readEducationFromDb() bool {
 }
 
 func (b *Bot) readVaccOpinionFromDb() bool {
-	vaccine := b.dbase.ReadCaption("userVaccineOpinion")
+	vaccine = b.dbase.ReadCaption("userVaccineOpinion")
 	if 3 <= len(vaccine) {
 		baseQuestion[st_vacc_opin].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
@@ -225,7 +236,7 @@ func (b *Bot) readVaccOpinionFromDb() bool {
 }
 
 func (b *Bot) readOrgnOpinionFromDb() bool {
-	origin := b.dbase.ReadCaption("userOriginOpinion")
+	origin = b.dbase.ReadCaption("userOriginOpinion")
 	if 2 <= len(origin) {
 		baseQuestion[st_orgn_opin].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
@@ -261,17 +272,17 @@ var illQuestion = []SubQuestion{
 }
 
 func (b *Bot) readIllnessSignFromDb() bool {
-	sign := b.dbase.ReadCaption("illnessSign")
-	if 3 <= len(sign) {
+	ill_sign = b.dbase.ReadCaption("illnessSign")
+	if 3 <= len(ill_sign) {
 		illQuestion[sst_sign].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(sign[0][0], sign[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_sign[0][0], ill_sign[0][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(sign[1][0], sign[1][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_sign[1][0], ill_sign[1][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(sign[2][0], sign[2][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_sign[2][0], ill_sign[2][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
 				cancelButton,
@@ -284,26 +295,26 @@ func (b *Bot) readIllnessSignFromDb() bool {
 }
 
 func (b *Bot) readIllnessDegreeFromDb() bool {
-	degree := b.dbase.ReadCaption("illnessDegree")
-	if 6 <= len(degree) {
+	ill_degree = b.dbase.ReadCaption("illnessDegree")
+	if 6 <= len(ill_degree) {
 		illQuestion[sst_degree].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(degree[0][0], degree[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_degree[0][0], ill_degree[0][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(degree[1][0], degree[1][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_degree[1][0], ill_degree[1][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(degree[2][0], degree[2][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_degree[2][0], ill_degree[2][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(degree[3][0], degree[3][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_degree[3][0], ill_degree[3][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(degree[4][0], degree[4][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_degree[4][0], ill_degree[4][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(degree[5][0], degree[5][1]),
+				tgbotapi.NewInlineKeyboardButtonData(ill_degree[5][0], ill_degree[5][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
 				cancelButton,
@@ -326,16 +337,16 @@ var vacQuestion = []SubQuestion{
 }
 
 func (b *Bot) readVaccineKindFromDb() bool {
-	kind := b.dbase.ReadCaption("vaccineKind")
-	if 4 <= len(kind) {
+	vac_kind = b.dbase.ReadCaption("vaccineKind")
+	if 4 <= len(vac_kind) {
 		vacQuestion[sst_kind].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(kind[0][0], kind[0][1]),
-				tgbotapi.NewInlineKeyboardButtonData(kind[1][0], kind[1][1]),
+				tgbotapi.NewInlineKeyboardButtonData(vac_kind[0][0], vac_kind[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(vac_kind[1][0], vac_kind[1][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(kind[2][0], kind[2][1]),
-				tgbotapi.NewInlineKeyboardButtonData(kind[3][0], kind[3][1]),
+				tgbotapi.NewInlineKeyboardButtonData(vac_kind[2][0], vac_kind[2][1]),
+				tgbotapi.NewInlineKeyboardButtonData(vac_kind[3][0], vac_kind[3][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
 				cancelButton,
@@ -348,17 +359,17 @@ func (b *Bot) readVaccineKindFromDb() bool {
 }
 
 func (b *Bot) readVaccineEffectFromDb() bool {
-	effect := b.dbase.ReadCaption("vaccineEffect")
-	if 3 <= len(effect) {
+	vac_effect = b.dbase.ReadCaption("vaccineEffect")
+	if 3 <= len(vac_effect) {
 		vacQuestion[sst_effect].key = tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(effect[0][0], effect[0][1]),
+				tgbotapi.NewInlineKeyboardButtonData(vac_effect[0][0], vac_effect[0][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(effect[1][0], effect[1][1]),
+				tgbotapi.NewInlineKeyboardButtonData(vac_effect[1][0], vac_effect[1][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
-				tgbotapi.NewInlineKeyboardButtonData(effect[2][0], effect[2][1]),
+				tgbotapi.NewInlineKeyboardButtonData(vac_effect[2][0], vac_effect[2][1]),
 			),
 			tgbotapi.NewInlineKeyboardRow(
 				cancelButton,
