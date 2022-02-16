@@ -10,35 +10,31 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-const idx_country = user.Idx_country
-const idx_birth = user.Idx_birth
-const idx_gender = user.Idx_gender
-const idx_education = user.Idx_education
-const idx_vacc_opin = user.Idx_vacc_opin
-const idx_orgn_opin = user.Idx_orgn_opin
-const idx_have_ill = 6
+const (
+	st_country = user.Idx_country
+	st_birth   = iota
+	st_gender
+	st_education
+	st_vacc_opin
+	st_orgn_opin
+	st_have_ill
+	st_get_have_ill
+	st_get_count_ill
+	st_illness
+	st_get_have_vac
+	st_get_count_vac
+	st_vaccination
+)
 
-const st_country = user.Idx_country + 1
-const st_birth = user.Idx_birth + 1
-const st_gender = user.Idx_gender + 1
-const st_education = user.Idx_education + 1
-const st_vacc_opin = user.Idx_vacc_opin + 1
-const st_orgn_opin = user.Idx_orgn_opin + 1
-const st_have_ill = 7
-const st_get_have_ill = 8
-const st_get_count_ill = 9
-const st_illness = 10
-const st_get_have_vac = 11
-const st_get_count_vac = 12
-const st_vaccination = 13
-
-const sst_year = user.Idx_year
-const sst_month = user.Idx_month
-const sst_sign = user.Idx_sign
-const sst_degree = user.Idx_degree
-const sst_kind = user.Idx_kind
-const sst_effect = user.Idx_effect
-const sst_next = 4
+const (
+	sst_year   = user.Idx_year
+	sst_month  = user.Idx_month
+	sst_sign   = user.Idx_sign
+	sst_degree = user.Idx_degree
+	sst_kind   = user.Idx_kind
+	sst_effect = user.Idx_effect
+	sst_next   = 4
+)
 
 var user_session = make(map[int64]*UserSession)
 
@@ -76,6 +72,11 @@ func (s *UserSession) startSurvey() bool {
 		// new user - start survey
 		msg := tgbotapi.NewMessage(s.chatID, start_msg)
 		msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+		s.b.bot.Send(msg)
+
+		// first question
+		msg = tgbotapi.NewMessage(s.chatID, baseQuestion[st_country].ask)
+		msg.ReplyMarkup = baseQuestion[st_country].key
 		s.b.bot.Send(msg)
 
 		return true
@@ -132,14 +133,13 @@ func (s *UserSession) sendRequest() bool {
 	switch s.state {
 	case st_birth:
 		if s.count == 0 {
-			s.sendQuestion(baseQuestion[idx_birth].ask, baseQuestion[idx_birth].key)
+			s.sendQuestion(baseQuestion[st_birth].ask, baseQuestion[st_birth].key)
 			s.state = st_birth // fix previous increment
 			s.count = 1000
-			s.userData.Base[idx_birth] = 0
+			s.userData.Base[st_birth] = 0
 		}
 	case st_gender, st_education, st_vacc_opin, st_orgn_opin, st_have_ill:
-		idx := s.state - 1
-		s.sendQuestion(baseQuestion[idx].ask, baseQuestion[idx].key)
+		s.sendQuestion(baseQuestion[s.state].ask, baseQuestion[s.state].key)
 	case st_get_have_ill:
 		if 0 < s.userData.CountIll {
 			s.sendQuestion(ask_countill_msg, countInlineKeyboard)
@@ -203,10 +203,10 @@ func (s *UserSession) getAnswer(userData string) bool {
 	switch s.state {
 	case st_country:
 		val, err := strconv.Atoi(userData)
-		if err != nil || val < baseQuestion[idx_country].min || baseQuestion[idx_country].max < val {
+		if err != nil || val < baseQuestion[st_country].min || baseQuestion[st_country].max < val {
 			ok = false
 		} else {
-			s.userData.Base[idx_country] = val
+			s.userData.Base[st_country] = val
 			s.state = st_birth
 		}
 	case st_birth:
@@ -214,17 +214,17 @@ func (s *UserSession) getAnswer(userData string) bool {
 		if err != nil {
 			ok = false
 		} else if 1920 <= digit && digit <= 2020 {
-			s.userData.Base[idx_birth] = digit
+			s.userData.Base[st_birth] = digit
 			s.count = 0
 			s.state = st_gender
 		} else if digit < 0 || 9 < digit || s.count == 1000 && digit != 1 && digit != 2 {
 			ok = false
 		} else {
-			s.userData.Base[idx_birth] += digit * s.count
+			s.userData.Base[st_birth] += digit * s.count
 			s.count /= 10
 			if s.count == 0 {
-				if 1920 <= s.userData.Base[idx_birth] && s.userData.Base[idx_birth] <= 2020 {
-					s.b.bot.Send(tgbotapi.NewMessage(s.chatID, strconv.Itoa(s.userData.Base[idx_birth])))
+				if 1920 <= s.userData.Base[st_birth] && s.userData.Base[st_birth] <= 2020 {
+					s.b.bot.Send(tgbotapi.NewMessage(s.chatID, strconv.Itoa(s.userData.Base[st_birth])))
 					s.state = st_gender
 				} else {
 					ok = false
@@ -233,7 +233,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 		}
 	case st_gender, st_education, st_vacc_opin, st_orgn_opin, st_have_ill:
 		val, err := strconv.Atoi(userData)
-		idx := s.state - 2
+		idx := s.state - 1
 		if err != nil || val < baseQuestion[idx].min || baseQuestion[idx].max < val {
 			ok = false
 		} else {
@@ -280,8 +280,8 @@ func (s *UserSession) getAnswer(userData string) bool {
 
 func (s *UserSession) writeResult() {
 	log.Printf("insert id %d, name %s, country %d, birth %d, gender %d, education %d, vaccine %d, origin %d, countIll %d, countVac %d",
-		s.userID, s.userName, s.userData.Base[idx_country], s.userData.Base[idx_birth], s.userData.Base[idx_gender], s.userData.Base[idx_education],
-		s.userData.Base[idx_vacc_opin], s.userData.Base[idx_orgn_opin], s.userData.CountIll, s.userData.CountVac)
+		s.userID, s.userName, s.userData.Base[st_country], s.userData.Base[st_birth], s.userData.Base[st_gender], s.userData.Base[st_education],
+		s.userData.Base[st_vacc_opin], s.userData.Base[st_orgn_opin], s.userData.CountIll, s.userData.CountVac)
 	s.b.dbase.Insert(s.userID,
 		time.Now().Local().Format("2006-01-02 15:04:05"),
 		s.userName,
@@ -306,7 +306,6 @@ func (s *UserSession) RunSurvey(ch chan string, quit chan struct{}) {
 	defer s.exit()
 	run := 1
 	if s.startSurvey() {
-		s.sendQuestion(baseQuestion[idx_country].ask, baseQuestion[idx_country].key) // s.state = st_country
 		for run != 0 {
 			select {
 			case <-quit:

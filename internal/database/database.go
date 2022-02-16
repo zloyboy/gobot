@@ -14,19 +14,23 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-const idx_country = user.Idx_country
-const idx_birth = user.Idx_birth
-const idx_gender = user.Idx_gender
-const idx_education = user.Idx_education
-const idx_vacc_opin = user.Idx_vacc_opin
-const idx_orgn_opin = user.Idx_orgn_opin
+const (
+	idx_country = user.Idx_country
+	idx_birth   = iota
+	idx_gender
+	idx_education
+	idx_vacc_opin
+	idx_orgn_opin
+)
 
-const idx_year = user.Idx_year
-const idx_month = user.Idx_month
-const idx_sign = user.Idx_sign
-const idx_degree = user.Idx_degree
-const idx_kind = user.Idx_kind
-const idx_effect = user.Idx_effect
+const (
+	idx_year   = user.Idx_year
+	idx_month  = user.Idx_month
+	idx_sign   = user.Idx_sign
+	idx_degree = user.Idx_degree
+	idx_kind   = user.Idx_kind
+	idx_effect = user.Idx_effect
+)
 
 type Dbase struct {
 	db *sql.DB

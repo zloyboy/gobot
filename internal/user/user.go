@@ -1,13 +1,15 @@
 package user
 
 const (
-	Idx_country   = 0
-	Idx_birth     = 1
-	Idx_gender    = 2
-	Idx_education = 3
-	Idx_vacc_opin = 4
-	Idx_orgn_opin = 5
+	Idx_country = 0
+	Idx_birth   = iota
+	Idx_gender
+	Idx_education
+	Idx_vacc_opin
+	Idx_orgn_opin
+)
 
+const (
 	Idx_year   = 0
 	Idx_month  = 1
 	Idx_sign   = 2
