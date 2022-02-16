@@ -66,25 +66,36 @@ func MakeSession(b *Bot, userID, chatID int64, userName string) *UserSession {
 }
 
 func (s *UserSession) startSurvey() bool {
-	msg := tgbotapi.NewMessage(s.chatID, "")
-	var res bool
-
-	uname, err := s.b.dbase.CheckIdName(s.userID)
+	_, err := s.b.dbase.CheckIdName(s.userID)
 	if err == nil {
 		// exist user - send statistic
-		msg.Text = "\nВы уже приняли участие в подсчете под именем " + uname +
-			"\n--------------------\n" + s.b.stat.MakeStatic() + repeat_msg
-		msg.ReplyMarkup = startKeyboard
-		res = false
+		s.sendStatic("Вы уже приняли участие в опросе")
+
+		return false
 	} else {
 		// new user - start survey
-		msg.Text = start_msg
+		msg := tgbotapi.NewMessage(s.chatID, start_msg)
 		msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-		res = true
-	}
+		s.b.bot.Send(msg)
 
+		return true
+	}
+}
+
+func (s *UserSession) sendStatic(header string) {
+	msg := tgbotapi.NewMessage(s.chatID, header)
 	s.b.bot.Send(msg)
-	return res
+
+	all := tgbotapi.NewPhoto(s.chatID, s.b.stat.MakeCommonChart())
+	s.b.bot.Send(all)
+	ill := tgbotapi.NewPhoto(s.chatID, s.b.stat.MakeChartIll())
+	s.b.bot.Send(ill)
+	vac := tgbotapi.NewPhoto(s.chatID, s.b.stat.MakeChartVac())
+	s.b.bot.Send(vac)
+
+	msg = tgbotapi.NewMessage(s.chatID, repeat_msg)
+	msg.ReplyMarkup = startKeyboard
+	s.b.bot.Send(msg)
 }
 
 func (s *UserSession) nextStep() {
@@ -268,8 +279,6 @@ func (s *UserSession) getAnswer(userData string) bool {
 }
 
 func (s *UserSession) writeResult() {
-	msg := tgbotapi.NewMessage(s.chatID, "")
-
 	log.Printf("insert id %d, name %s, country %d, birth %d, gender %d, education %d, vaccine %d, origin %d, countIll %d, countVac %d",
 		s.userID, s.userName, s.userData.Base[idx_country], s.userData.Base[idx_birth], s.userData.Base[idx_gender], s.userData.Base[idx_education],
 		s.userData.Base[idx_vacc_opin], s.userData.Base[idx_orgn_opin], s.userData.CountIll, s.userData.CountVac)
@@ -278,10 +287,7 @@ func (s *UserSession) writeResult() {
 		s.userName,
 		s.userData)
 	s.b.stat.RefreshStatic(s.userData)
-	msg.Text = s.b.stat.MakeStatic() + repeat_msg
-	msg.ReplyMarkup = startKeyboard
-
-	s.b.bot.Send(msg)
+	s.sendStatic(thank_msg)
 }
 
 func (s *UserSession) abort(reason string) {
