@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/zloyboy/gobot/database"
-	"github.com/zloyboy/gobot/telegram"
+	"github.com/zloyboy/gobot/internal/database"
+	"github.com/zloyboy/gobot/internal/telegram"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	godotenv "github.com/joho/godotenv"

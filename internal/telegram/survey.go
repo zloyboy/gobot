@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/zloyboy/gobot/user"
+	"github.com/zloyboy/gobot/internal/user"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

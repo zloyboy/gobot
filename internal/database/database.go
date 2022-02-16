@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zloyboy/gobot/user"
+	"github.com/zloyboy/gobot/internal/user"
 
 	_ "github.com/mattn/go-sqlite3"
 )

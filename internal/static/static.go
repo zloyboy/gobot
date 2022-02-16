@@ -1,29 +1,34 @@
-package telegram
+package static
 
 import (
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/zloyboy/gobot/user"
+	"github.com/zloyboy/gobot/internal/database"
+	"github.com/zloyboy/gobot/internal/user"
 )
 
-func (b *Bot) readStatFromDb() {
-	b.stat.cntAll, b.stat.cntIll, b.stat.cntVac, b.stat.age_stat = b.dbase.ReadCountAge()
-}
+const idx_birth = user.Idx_birth
 
 type Static struct {
 	cntAll, cntIll, cntVac int
 	age_stat               [6][3]int
+	dbase                  *database.Dbase
 }
 
-func Stat() *Static {
+func Stat(db *database.Dbase) *Static {
 	return &Static{
 		cntAll:   0,
 		cntIll:   0,
 		cntVac:   0,
 		age_stat: [6][3]int{},
+		dbase:    db,
 	}
+}
+
+func (s *Static) ReadStatFromDb() {
+	s.cntAll, s.cntIll, s.cntVac, s.age_stat = s.dbase.ReadCountAge()
 }
 
 func (s *Static) MakeStatic() string {

@@ -8,6 +8,6 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o gobot .
+RUN go build github.com/zloyboy/gobot/cmd/gobot
 
 CMD [ "./gobot" ]

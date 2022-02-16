@@ -3,7 +3,8 @@ package telegram
 import (
 	"log"
 
-	"github.com/zloyboy/gobot/database"
+	"github.com/zloyboy/gobot/internal/database"
+	"github.com/zloyboy/gobot/internal/static"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -11,12 +12,12 @@ import (
 type Bot struct {
 	bot   *tgbotapi.BotAPI
 	dbase *database.Dbase
-	stat  *Static
+	stat  *static.Static
 	utime *TimeStamp
 }
 
 func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase) *Bot {
-	return &Bot{bot: bot, dbase: db, stat: Stat(), utime: MakeStamp()}
+	return &Bot{bot: bot, dbase: db, stat: static.Stat(db), utime: MakeStamp()}
 }
 
 func (b *Bot) Run() {
@@ -39,7 +40,7 @@ func (b *Bot) Run() {
 		return
 	}
 	b.setKeyboards()
-	b.readStatFromDb()
+	b.stat.ReadStatFromDb()
 
 	go b.utime.DeleteTimeouts()
 
