@@ -51,7 +51,7 @@ func (b *Bot) Run() {
 
 		userID := update.SentFrom().ID
 		if _, ok := user_session[userID]; !ok {
-			if b.utime.UserTimeout(userID) {
+			if b.utime.CheckTimeout(userID) {
 				continue
 			}
 		}
@@ -61,6 +61,8 @@ func (b *Bot) Run() {
 			userData = update.Message.Text
 		} else if update.CallbackQuery != nil {
 			userData = update.CallbackQuery.Data
+		} else {
+			continue
 		}
 
 		if _, ok := user_session[userID]; ok {
@@ -79,5 +81,6 @@ func (b *Bot) Run() {
 				user_session[userID].userChan,
 				user_session[userID].userStop)
 		}
+		b.utime.SetStampNow(userID)
 	}
 }

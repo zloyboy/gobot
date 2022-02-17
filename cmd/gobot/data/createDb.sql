@@ -92,7 +92,7 @@ create table if not exists vaccineKind(
     id integer primary key,
     rus string
 );
-insert into vaccineKind (rus) values ("Спутник-V (два укола)"), ("Спутник-Лайт (один укол)"), ("ЭпиВакКорона"), ("КовиВак");
+insert into vaccineKind (rus) values ("Спутник-V (два укола)"), ("Спутник-Лайт"), ("ЭпиВакКорона"), ("КовиВак");
 
 create table if not exists vaccineEffect(
     id integer primary key,

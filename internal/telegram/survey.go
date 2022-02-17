@@ -295,9 +295,7 @@ func (s *UserSession) checkResult() {
 	idx_vacc_opin := s.userData.Base[st_vacc_opin]
 	idx_orgn_opin := s.userData.Base[st_orgn_opin]
 
-	msg.Text = "Корректны ли введенные вами данные?" +
-		"\n--------------------" +
-		"\nСтрана: " + country[idx_country][0] +
+	msg.Text = "\nСтрана: " + country[idx_country][0] +
 		"\nГод рождения: " + strconv.Itoa(birth_year) +
 		"\nПол: " + gender[idx_gender][0] +
 		"\nОбразование: " + education[idx_education][0] +
@@ -319,7 +317,6 @@ func (s *UserSession) checkResult() {
 	} else {
 		msg.Text += "\nНе болел(а)"
 	}
-
 	msg.Text += "\n--------------------"
 
 	if 0 < s.userData.CountVac {
@@ -336,8 +333,10 @@ func (s *UserSession) checkResult() {
 	} else {
 		msg.Text += "\nНе вакцинирован(а)"
 	}
+	msg.Text += "\n--------------------" +
+		"\nВсе правильно?"
 
-	msg.ReplyMarkup = yesnoInlineKeyboard
+	msg.ReplyMarkup = cancelInlineKeyboard
 	s.b.bot.Send(msg)
 	s.nextStep()
 }
@@ -361,7 +360,6 @@ func (s *UserSession) abort(reason string) {
 
 func (s *UserSession) exit() {
 	log.Printf("Exit user %d", s.userID)
-	s.b.utime.SetStamp(s.userID, time.Now().Unix())
 	delete(user_session, s.userID)
 }
 

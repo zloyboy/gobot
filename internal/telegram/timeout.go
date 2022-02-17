@@ -20,6 +20,13 @@ func (t *TimeStamp) SetStamp(key, val int64) {
 	t.mx.Lock()
 	t.stamp[key] = val
 	t.mx.Unlock()
+	//log.Printf("SetStamp %d", val)
+}
+
+func (t *TimeStamp) SetStampNow(key int64) {
+	t.mx.Lock()
+	t.stamp[key] = time.Now().Unix()
+	t.mx.Unlock()
 }
 
 func (t *TimeStamp) GetStamp(key int64) (int64, bool) {
@@ -29,15 +36,14 @@ func (t *TimeStamp) GetStamp(key int64) (int64, bool) {
 	return val, ok
 }
 
-func (t *TimeStamp) UserTimeout(id int64) bool {
+func (t *TimeStamp) CheckTimeout(id int64) bool {
 	curr_time := time.Now().Unix()
 	if tstamp, ok := t.GetStamp(id); ok && 0 < tstamp {
-		//log.Printf("Timestamp %d, pass %d", tstamp, (curr_time - tstamp))
+		//log.Printf("CheckTimeout %d, pass %d", tstamp, (curr_time - tstamp))
 		if (curr_time - tstamp) < 10 {
 			return true
 		}
 	}
-	//log.Printf("Timestamp %d", curr_time)
 	t.SetStamp(id, curr_time)
 	return false
 }
@@ -60,7 +66,11 @@ func (t *TimeStamp) DeleteTimeouts() {
 				t.mx.Lock()
 				delete(t.stamp, id)
 				t.mx.Unlock()
-				//log.Printf("Delete tstamp id %d", id)
+				//log.Printf("Delete stamp id %d", id)
+				if _, ok := user_session[id]; ok {
+					//log.Printf("User %d timeout", id)
+					close(user_session[id].userStop)
+				}
 			}
 		}
 		userIDs = nil
