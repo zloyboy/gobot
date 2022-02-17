@@ -2,7 +2,6 @@ create table if not exists user(
     teleId integer primary key,
     created datetime,
     modified datetime,
-    name varchar(255),
     country integer not null,
     birth integer not null,
     gender integer not null,
@@ -12,8 +11,6 @@ create table if not exists user(
     countIll integer not null,
     countVac integer not null
 );
-
-create index if not exists name_index on user (name);
 
 create table if not exists userAgeGroup(
     id integer primary key,

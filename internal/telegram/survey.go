@@ -46,17 +46,16 @@ type UserSession struct {
 	subState       int
 	count          int
 	userID, chatID int64
-	userName       string
 	userChan       chan string
 	userStop       chan struct{}
 	userData       user.UserData
 	userSub        [4]int
 }
 
-func MakeSession(b *Bot, userID, chatID int64, userName string) *UserSession {
+func MakeSession(b *Bot, userID, chatID int64) *UserSession {
 	return &UserSession{b,
 		0, 0, 0,
-		userID, chatID, userName,
+		userID, chatID,
 		make(chan string, 10),
 		make(chan struct{}),
 		user.MakeUser(),
@@ -64,11 +63,8 @@ func MakeSession(b *Bot, userID, chatID int64, userName string) *UserSession {
 }
 
 func (s *UserSession) startSurvey() bool {
-	_, err := s.b.dbase.CheckIdName(s.userID)
-	if err == nil {
-		// exist user - send statistic
+	if s.b.dbase.ExistId(s.userID) {
 		s.sendStatic("Вы уже приняли участие в опросе")
-
 		return false
 	} else {
 		// new user - start survey
@@ -347,12 +343,11 @@ func (s *UserSession) checkResult() {
 }
 
 func (s *UserSession) writeResult() {
-	log.Printf("insert id %d, name %s, country %d, birth %d, gender %d, education %d, vaccine %d, origin %d, countIll %d, countVac %d",
-		s.userID, s.userName, s.userData.Base[st_country], s.userData.Base[st_birth], s.userData.Base[st_gender], s.userData.Base[st_education],
+	log.Printf("insert id %d, country %d, birth %d, gender %d, education %d, vaccine %d, origin %d, countIll %d, countVac %d",
+		s.userID, s.userData.Base[st_country], s.userData.Base[st_birth], s.userData.Base[st_gender], s.userData.Base[st_education],
 		s.userData.Base[st_vacc_opin], s.userData.Base[st_orgn_opin], s.userData.CountIll, s.userData.CountVac)
 	s.b.dbase.Insert(s.userID,
 		time.Now().Local().Format("2006-01-02 15:04:05"),
-		s.userName,
 		s.userData)
 	s.b.stat.RefreshStatic(s.userData)
 	s.sendStatic(thank_msg)

@@ -80,26 +80,29 @@ func InitDb() *Dbase {
 	return &Dbase{db: db}
 }
 
-func (dbase *Dbase) CheckIdName(id int64) (string, error) {
-	var userNname = ""
-	err := dbase.db.QueryRow("SELECT name FROM user WHERE teleId=?", id).Scan(&userNname)
-	return userNname, err
+func (dbase *Dbase) ExistId(id int64) bool {
+	res := 0
+	err := dbase.db.QueryRow("SELECT EXISTS(SELECT 1 FROM user WHERE teleId=?)", id).Scan(&res)
+	if err != nil || res != 1 {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (dbase *Dbase) Insert(
 	teleId int64,
 	date string,
-	name string,
 	usr user.UserData) error {
 
 	tx, _ := dbase.db.Begin()
 	defer tx.Rollback()
 
 	stmt, _ := tx.Prepare("INSERT INTO user" +
-		"(teleId, created, modified, name, country, birth, gender, education, vaccineOpinion, originOpinion, countIll, countVac)" +
-		"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		"(teleId, created, modified, country, birth, gender, education, vaccineOpinion, originOpinion, countIll, countVac)" +
+		"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	defer stmt.Close()
-	stmt.Exec(teleId, date, date, name, usr.Base[idx_country], usr.Base[idx_birth], usr.Base[idx_gender],
+	stmt.Exec(teleId, date, date, usr.Base[idx_country], usr.Base[idx_birth], usr.Base[idx_gender],
 		usr.Base[idx_education], usr.Base[idx_vacc_opin], usr.Base[idx_orgn_opin], usr.CountIll, usr.CountVac)
 
 	age_group := user.GetAgeGroup(time.Now().Year() - usr.Base[idx_birth])
@@ -168,7 +171,7 @@ func (dbase *Dbase) ReadCountAge() (int, int, int, [6][3]int) {
 	var cntAll, cntIll, cntVac int
 	var stat [6][3]int
 
-	rows, _ := dbase.db.Query("SELECT age_group, have_ill, have_vac, COUNT(*) FROM userAgeGroup GROUP BY age_group, have_ill, have_vac;")
+	rows, _ := dbase.db.Query("SELECT age_group, have_ill, have_vac, COUNT(*) FROM userAgeGroup GROUP BY age_group, have_ill, have_vac")
 	defer rows.Close()
 
 	ageGrp, ill, vac, count := 0, 0, 0, 0
