@@ -12,6 +12,10 @@ import (
 )
 
 func main() {
+	f, _ := os.OpenFile("data/log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
+	defer f.Close()
+	log.SetOutput(f)
+
 	dbase := database.InitDb()
 	if dbase == nil {
 		return

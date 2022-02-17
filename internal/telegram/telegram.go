@@ -66,7 +66,7 @@ func (b *Bot) Run() {
 		}
 
 		if _, ok := user_session[userID]; ok {
-			log.Printf("doing user %d, data %s", userID, userData)
+			//log.Printf("user %d data %s", userID, userData)
 			if userData == "stop" || userData == "Stop" {
 				close(user_session[userID].userStop)
 			} else {
@@ -74,7 +74,7 @@ func (b *Bot) Run() {
 			}
 		} else {
 			chatID := update.FromChat().ID
-			log.Printf("Start user %d, data %s", userID, userData)
+			log.Printf("Start user %d", userID)
 
 			user_session[userID] = MakeSession(b, userID, chatID)
 			go user_session[userID].RunSurvey(

@@ -342,9 +342,16 @@ func (s *UserSession) checkResult() {
 }
 
 func (s *UserSession) writeResult() {
-	log.Printf("insert id %d, country %d, birth %d, gender %d, education %d, vaccine %d, origin %d, countIll %d, countVac %d",
-		s.userID, s.userData.Base[st_country], s.userData.Base[st_birth], s.userData.Base[st_gender], s.userData.Base[st_education],
-		s.userData.Base[st_vacc_opin], s.userData.Base[st_orgn_opin], s.userData.CountIll, s.userData.CountVac)
+	idx_country := s.userData.Base[st_country]
+	birth_year := s.userData.Base[st_birth]
+	idx_gender := s.userData.Base[st_gender]
+	idx_education := s.userData.Base[st_education]
+	idx_vacc_opin := s.userData.Base[st_vacc_opin]
+	idx_orgn_opin := s.userData.Base[st_orgn_opin]
+	log.Printf("insert id %d, country %s, birth %d, gender %d, edu %s, vaccine %s, origin %s, countIll %d, countVac %d",
+		s.userID, country[idx_country][0], birth_year, idx_gender, education[idx_education][0],
+		vaccine[idx_vacc_opin][0], origin[idx_orgn_opin][0], s.userData.CountIll, s.userData.CountVac)
+
 	s.b.dbase.Insert(s.userID,
 		time.Now().Local().Format("2006-01-02 15:04:05"),
 		s.userData)
