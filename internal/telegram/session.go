@@ -38,26 +38,20 @@ const (
 	sst_next   = 4
 )
 
-var user_session = make(map[int64]*UserSession)
-
 type UserSession struct {
 	b              *Bot
 	state          int
 	subState       int
 	count          int
 	userID, chatID int64
-	userChan       chan string
-	userStop       chan struct{}
 	userData       user.UserData
 	userSub        [4]int
 }
 
-func MakeSession(b *Bot, userID, chatID int64) *UserSession {
+func makeUserSession(b *Bot, userID, chatID int64) *UserSession {
 	return &UserSession{b,
 		0, 0, 0,
 		userID, chatID,
-		make(chan string, 10),
-		make(chan struct{}),
 		user.MakeUser(),
 		user.MakeSubUser()}
 }
@@ -367,26 +361,28 @@ func (s *UserSession) abort(reason string) {
 
 const userTout = 10
 
-func (s *UserSession) RunSurvey(ch chan string, quit chan struct{}) {
+func RunSurvey(b *Bot, userID, chatID int64, uchan *Channel) {
 	tout := time.NewTimer(userTout * time.Second)
+
+	s := makeUserSession(b, userID, chatID)
 
 	defer func() {
 		s.b.tout.SetTimer(s.userID)
 		log.Printf("Exit user %d", s.userID)
-		delete(user_session, s.userID)
+		delete(s.b.uchan, s.userID)
 		tout.Stop()
 	}()
 
 	if s.startSurvey() {
 		for {
 			select {
-			case <-quit:
+			case <-uchan.stop:
 				s.abort(stop_msg)
 				return
 			case <-tout.C:
 				s.abort(tout_msg)
 				return
-			case data := <-ch:
+			case data := <-uchan.data:
 				if !s.getAnswer(data) {
 					s.abort(error_msg)
 					return

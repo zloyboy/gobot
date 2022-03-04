@@ -15,10 +15,17 @@ type Bot struct {
 	dbase *database.Dbase
 	stat  *static.Static
 	tout  *timeout.Timeout
+	uchan userChannel
 }
 
 func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase) *Bot {
-	return &Bot{bot: bot, dbase: db, stat: static.Stat(db), tout: timeout.Make()}
+	return &Bot{
+		bot:   bot,
+		dbase: db,
+		stat:  static.Stat(db),
+		tout:  timeout.Make(),
+		uchan: make(userChannel),
+	}
 }
 
 func (b *Bot) Run() {
@@ -49,7 +56,7 @@ func (b *Bot) Run() {
 		}
 
 		userID := update.SentFrom().ID
-		if _, ok := user_session[userID]; !ok {
+		if _, ok := b.uchan[userID]; !ok {
 			if b.tout.Exist(userID) {
 				continue
 			}
@@ -64,21 +71,19 @@ func (b *Bot) Run() {
 			continue
 		}
 
-		if _, ok := user_session[userID]; ok {
+		if _, ok := b.uchan[userID]; ok {
 			//log.Printf("user %d data %s", userID, userData)
 			if userData == "stop" || userData == "Stop" {
-				close(user_session[userID].userStop)
+				close(b.uchan[userID].stop)
 			} else {
-				user_session[userID].userChan <- userData
+				b.uchan[userID].data <- userData
 			}
 		} else {
 			chatID := update.FromChat().ID
 			log.Printf("Start user %d", userID)
 
-			user_session[userID] = MakeSession(b, userID, chatID)
-			go user_session[userID].RunSurvey(
-				user_session[userID].userChan,
-				user_session[userID].userStop)
+			b.uchan[userID] = makeChannel()
+			go RunSurvey(b, userID, chatID, b.uchan[userID])
 		}
 	}
 }
