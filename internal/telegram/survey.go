@@ -365,30 +365,39 @@ func (s *UserSession) abort(reason string) {
 	s.b.bot.Send(msg)
 }
 
-func (s *UserSession) exit() {
-	log.Printf("Exit user %d", s.userID)
-	delete(user_session, s.userID)
-}
+const userTout = 10
 
 func (s *UserSession) RunSurvey(ch chan string, quit chan struct{}) {
-	defer s.exit()
-	run := 1
+	tout := time.NewTimer(userTout * time.Second)
+
+	defer func() {
+		log.Printf("Exit user %d", s.userID)
+		delete(user_session, s.userID)
+		tout.Stop()
+	}()
+
 	if s.startSurvey() {
-		for run != 0 {
+		for {
 			select {
 			case <-quit:
 				s.abort(stop_msg)
+				return
+			case <-tout.C:
+				s.abort(tout_msg)
 				return
 			case data := <-ch:
 				if !s.getAnswer(data) {
 					s.abort(error_msg)
 					return
 				}
+				if !tout.Stop() {
+					<-tout.C
+				}
+				tout.Reset(userTout * time.Second)
 				if !s.sendRequest() {
-					run = 0
+					s.writeResult()
 				}
 			}
 		}
-		s.writeResult()
 	}
 }

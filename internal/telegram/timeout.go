@@ -67,10 +67,6 @@ func (t *TimeStamp) DeleteTimeouts() {
 				delete(t.stamp, id)
 				t.mx.Unlock()
 				//log.Printf("Delete stamp id %d", id)
-				if _, ok := user_session[id]; ok {
-					//log.Printf("User %d timeout", id)
-					close(user_session[id].userStop)
-				}
 			}
 		}
 		userIDs = nil
