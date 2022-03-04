@@ -5,6 +5,7 @@ import (
 
 	"github.com/zloyboy/gobot/internal/database"
 	"github.com/zloyboy/gobot/internal/static"
+	"github.com/zloyboy/gobot/internal/timeout"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -13,11 +14,11 @@ type Bot struct {
 	bot   *tgbotapi.BotAPI
 	dbase *database.Dbase
 	stat  *static.Static
-	utime *TimeStamp
+	tout  *timeout.Timeout
 }
 
 func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase) *Bot {
-	return &Bot{bot: bot, dbase: db, stat: static.Stat(db), utime: MakeStamp()}
+	return &Bot{bot: bot, dbase: db, stat: static.Stat(db), tout: timeout.Make()}
 }
 
 func (b *Bot) Run() {
@@ -42,8 +43,6 @@ func (b *Bot) Run() {
 	b.setKeyboards()
 	b.stat.ReadStatFromDb()
 
-	go b.utime.DeleteTimeouts()
-
 	for update := range updates {
 		if update.Message == nil && update.CallbackQuery == nil { // ignore non-Message updates
 			continue
@@ -51,7 +50,7 @@ func (b *Bot) Run() {
 
 		userID := update.SentFrom().ID
 		if _, ok := user_session[userID]; !ok {
-			if b.utime.CheckTimeout(userID) {
+			if b.tout.Exist(userID) {
 				continue
 			}
 		}
@@ -81,6 +80,5 @@ func (b *Bot) Run() {
 				user_session[userID].userChan,
 				user_session[userID].userStop)
 		}
-		b.utime.SetStampNow(userID)
 	}
 }

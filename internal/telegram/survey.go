@@ -371,6 +371,7 @@ func (s *UserSession) RunSurvey(ch chan string, quit chan struct{}) {
 	tout := time.NewTimer(userTout * time.Second)
 
 	defer func() {
+		s.b.tout.SetTimer(s.userID)
 		log.Printf("Exit user %d", s.userID)
 		delete(user_session, s.userID)
 		tout.Stop()
