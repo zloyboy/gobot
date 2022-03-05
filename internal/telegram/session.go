@@ -359,18 +359,17 @@ func (s *UserSession) abort(reason string) {
 	s.b.bot.Send(msg)
 }
 
-const userTout = 10
+const answerTout = 15
 
-func RunSurvey(b *Bot, userID, chatID int64, uchan *Channel) {
-	tout := time.NewTimer(userTout * time.Second)
+func RunSurvey(b *Bot, userID, chatID int64, uchan *Channel, done chan int64) {
+	tout := time.NewTimer(answerTout * time.Second)
 
 	s := makeUserSession(b, userID, chatID)
 
 	defer func() {
 		s.b.tout.SetTimer(s.userID)
-		log.Printf("Exit user %d", s.userID)
-		delete(s.b.uchan, s.userID)
 		tout.Stop()
+		done <- s.userID
 	}()
 
 	if s.startSurvey() {
@@ -390,9 +389,11 @@ func RunSurvey(b *Bot, userID, chatID int64, uchan *Channel) {
 				if !tout.Stop() {
 					<-tout.C
 				}
-				tout.Reset(userTout * time.Second)
-				if !s.sendRequest() {
+				if s.sendRequest() {
+					tout.Reset(answerTout * time.Second)
+				} else {
 					s.writeResult()
+					return
 				}
 			}
 		}

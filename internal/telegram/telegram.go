@@ -34,6 +34,7 @@ func (b *Bot) Run() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	updates := b.bot.GetUpdatesChan(u)
+	done := make(chan int64, 10)
 
 	if !b.readYearFromDb() ||
 		!b.readMonthFromDb() ||
@@ -50,40 +51,48 @@ func (b *Bot) Run() {
 	b.setKeyboards()
 	b.stat.ReadStatFromDb()
 
-	for update := range updates {
-		if update.Message == nil && update.CallbackQuery == nil { // ignore non-Message updates
-			continue
-		}
-
-		userID := update.SentFrom().ID
-		if _, ok := b.uchan[userID]; !ok {
-			if b.tout.Exist(userID) {
+	for {
+		select {
+		case update := <-updates:
+			if update.Message == nil && update.CallbackQuery == nil { // ignore non-Message updates
 				continue
 			}
-		}
 
-		var userData string
-		if update.Message != nil {
-			userData = update.Message.Text
-		} else if update.CallbackQuery != nil {
-			userData = update.CallbackQuery.Data
-		} else {
-			continue
-		}
-
-		if _, ok := b.uchan[userID]; ok {
-			//log.Printf("user %d data %s", userID, userData)
-			if userData == "stop" || userData == "Stop" {
-				close(b.uchan[userID].stop)
-			} else {
-				b.uchan[userID].data <- userData
+			userID := update.SentFrom().ID
+			if _, ok := b.uchan[userID]; !ok {
+				if b.tout.Exist(userID) {
+					continue
+				}
 			}
-		} else {
-			chatID := update.FromChat().ID
-			log.Printf("Start user %d", userID)
 
-			b.uchan[userID] = makeChannel()
-			go RunSurvey(b, userID, chatID, b.uchan[userID])
+			var userData string
+			if update.Message != nil {
+				userData = update.Message.Text
+			} else if update.CallbackQuery != nil {
+				userData = update.CallbackQuery.Data
+			} else {
+				continue
+			}
+
+			if _, ok := b.uchan[userID]; ok {
+				//log.Printf("user %d data %s", userID, userData)
+				if userData == "stop" || userData == "Stop" {
+					b.uchan[userID].stop <- struct{}{}
+				} else {
+					b.uchan[userID].data <- userData
+				}
+			} else {
+				chatID := update.FromChat().ID
+				log.Printf("Start user %d", userID)
+
+				b.uchan[userID] = makeChannel()
+				go RunSurvey(b, userID, chatID, b.uchan[userID], done)
+			}
+		case userID := <-done:
+			close(b.uchan[userID].stop)
+			close(b.uchan[userID].data)
+			delete(b.uchan, userID)
+			log.Printf("Exit user %d", userID)
 		}
 	}
 }
