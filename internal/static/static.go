@@ -3,6 +3,7 @@ package static
 import (
 	"bytes"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/zloyboy/gobot/internal/database"
@@ -21,9 +22,11 @@ const (
 )
 
 type Static struct {
-	cntAll, cntIll, cntVac int
-	age_stat               [6][3]int
-	dbase                  *database.Dbase
+	mx                           sync.RWMutex
+	cntAll, cntIll, cntVac       int
+	age_stat                     [6][3]int
+	dbase                        *database.Dbase
+	chartAll, chartIll, chartVac tgbotapi.FileBytes
 }
 
 func Stat(db *database.Dbase) *Static {
@@ -33,11 +36,35 @@ func Stat(db *database.Dbase) *Static {
 		cntVac:   0,
 		age_stat: [6][3]int{},
 		dbase:    db,
+		chartAll: tgbotapi.FileBytes{Bytes: nil},
+		chartIll: tgbotapi.FileBytes{Bytes: nil},
+		chartVac: tgbotapi.FileBytes{Bytes: nil},
 	}
 }
 
 func (s *Static) ReadStatFromDb() {
 	s.cntAll, s.cntIll, s.cntVac, s.age_stat = s.dbase.ReadCountAge()
+	s.makeChartAll()
+	s.makeChartIll()
+	s.makeChartVac()
+}
+
+func (s *Static) GetChartAll() tgbotapi.FileBytes {
+	s.mx.RLock()
+	defer s.mx.RUnlock()
+	return s.chartAll
+}
+
+func (s *Static) GetChartIll() tgbotapi.FileBytes {
+	s.mx.RLock()
+	defer s.mx.RUnlock()
+	return s.chartIll
+}
+
+func (s *Static) GetChartVac() tgbotapi.FileBytes {
+	s.mx.RLock()
+	defer s.mx.RUnlock()
+	return s.chartVac
 }
 
 func (s *Static) RefreshStatic(usr user.UserData) {
@@ -51,6 +78,8 @@ func (s *Static) RefreshStatic(usr user.UserData) {
 		haveVac = 1
 	}
 
+	s.mx.Lock()
+
 	s.cntAll++
 	s.cntIll += haveIll
 	s.cntVac += haveVac
@@ -58,6 +87,12 @@ func (s *Static) RefreshStatic(usr user.UserData) {
 	s.age_stat[ageGrp][0]++
 	s.age_stat[ageGrp][1] += haveIll
 	s.age_stat[ageGrp][2] += haveVac
+
+	s.makeChartAll()
+	s.makeChartIll()
+	s.makeChartVac()
+
+	s.mx.Unlock()
 }
 
 func (s *Static) makeAgeChart(title string, values []chart.Value) chart.BarChart {
@@ -91,7 +126,7 @@ func (s *Static) makeAgeChart(title string, values []chart.Value) chart.BarChart
 
 var age = [6]string{"до 20", "20-29", "30-39", "40-49", "50-59", "после 60"}
 
-func (s *Static) MakeChartIll() tgbotapi.FileBytes {
+func (s *Static) makeChartIll() {
 	values := make([]chart.Value, 0, 6)
 
 	for i := 0; i < 6; i++ {
@@ -107,10 +142,10 @@ func (s *Static) MakeChartIll() tgbotapi.FileBytes {
 	response := s.makeAgeChart("Заболеваемость по возрастам", values)
 	buffer := &bytes.Buffer{}
 	response.Render(chart.PNG, buffer)
-	return tgbotapi.FileBytes{Name: "ill.png", Bytes: buffer.Bytes()}
+	s.chartIll = tgbotapi.FileBytes{Name: "ill.png", Bytes: buffer.Bytes()}
 }
 
-func (s *Static) MakeChartVac() tgbotapi.FileBytes {
+func (s *Static) makeChartVac() {
 	values := make([]chart.Value, 0, 6)
 
 	for i := 0; i < 6; i++ {
@@ -126,10 +161,10 @@ func (s *Static) MakeChartVac() tgbotapi.FileBytes {
 	response := s.makeAgeChart("Вакцинация по возрастам", values)
 	buffer := &bytes.Buffer{}
 	response.Render(chart.PNG, buffer)
-	return tgbotapi.FileBytes{Name: "vac.png", Bytes: buffer.Bytes()}
+	s.chartVac = tgbotapi.FileBytes{Name: "vac.png", Bytes: buffer.Bytes()}
 }
 
-func (s *Static) MakeCommonChart() tgbotapi.FileBytes {
+func (s *Static) makeChartAll() {
 	var perIll, perVac float64
 	if s.cntAll == 0 {
 		perIll, perVac = 0, 0
@@ -173,5 +208,5 @@ func (s *Static) MakeCommonChart() tgbotapi.FileBytes {
 
 	buffer := &bytes.Buffer{}
 	response.Render(chart.PNG, buffer)
-	return tgbotapi.FileBytes{Name: "common.png", Bytes: buffer.Bytes()}
+	s.chartAll = tgbotapi.FileBytes{Name: "common.png", Bytes: buffer.Bytes()}
 }

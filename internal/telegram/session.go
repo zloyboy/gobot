@@ -79,11 +79,11 @@ func (s *UserSession) sendStatic(header string) {
 	msg := tgbotapi.NewMessage(s.chatID, header)
 	s.b.bot.Send(msg)
 
-	all := tgbotapi.NewPhoto(s.chatID, s.b.stat.MakeCommonChart())
+	all := tgbotapi.NewPhoto(s.chatID, s.b.stat.GetChartAll())
 	s.b.bot.Send(all)
-	ill := tgbotapi.NewPhoto(s.chatID, s.b.stat.MakeChartIll())
+	ill := tgbotapi.NewPhoto(s.chatID, s.b.stat.GetChartIll())
 	s.b.bot.Send(ill)
-	vac := tgbotapi.NewPhoto(s.chatID, s.b.stat.MakeChartVac())
+	vac := tgbotapi.NewPhoto(s.chatID, s.b.stat.GetChartVac())
 	s.b.bot.Send(vac)
 
 	msg = tgbotapi.NewMessage(s.chatID, repeat_msg)
