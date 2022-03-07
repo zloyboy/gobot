@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/zloyboy/gobot/internal/user"
@@ -33,6 +34,7 @@ const (
 )
 
 type Dbase struct {
+	mx sync.Mutex
 	db *sql.DB
 }
 
@@ -90,10 +92,9 @@ func (dbase *Dbase) ExistId(id int64) bool {
 	}
 }
 
-func (dbase *Dbase) Insert(
-	teleId int64,
-	date string,
-	usr user.UserData) error {
+func (dbase *Dbase) Insert(teleId int64, date string, usr user.UserData) error {
+	dbase.mx.Lock()
+	defer dbase.mx.Unlock()
 
 	tx, _ := dbase.db.Begin()
 	defer tx.Rollback()
