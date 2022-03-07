@@ -46,6 +46,7 @@ type UserSession struct {
 	userID, chatID int64
 	userData       user.UserData
 	userSub        [4]int
+	failed         bool
 }
 
 func makeUserSession(b *Bot, userID, chatID int64) *UserSession {
@@ -53,7 +54,8 @@ func makeUserSession(b *Bot, userID, chatID int64) *UserSession {
 		0, 0, 0,
 		userID, chatID,
 		user.MakeUser(),
-		user.MakeSubUser()}
+		user.MakeSubUser(),
+		false}
 }
 
 func (s *UserSession) startSurvey() bool {
@@ -95,12 +97,20 @@ func (s *UserSession) nextStep() {
 	s.state++
 }
 
+func (s *UserSession) prevStep() {
+	s.state--
+}
+
 func (s *UserSession) resetSubStep() {
 	s.subState = 0
 }
 
 func (s *UserSession) nextSubStep() {
 	s.subState++
+}
+
+func (s *UserSession) prevSubStep() {
+	s.subState--
 }
 
 func (s *UserSession) sendQuestion(text string, keyboard interface{}) {
@@ -147,7 +157,7 @@ func (s *UserSession) sendRequest() bool {
 		s.nextStep()
 	case st_illness:
 		switch s.subState {
-		case sst_month, sst_sign, sst_degree:
+		case sst_year, sst_month, sst_sign, sst_degree:
 			s.sendSubQuestion(&illQuestion[s.subState], s.userData.CountIll)
 		case sst_next:
 			s.resetSubStep()
@@ -174,7 +184,7 @@ func (s *UserSession) sendRequest() bool {
 		s.nextStep()
 	case st_vaccination:
 		switch s.subState {
-		case sst_month, sst_kind, sst_effect:
+		case sst_year, sst_month, sst_kind, sst_effect:
 			s.sendSubQuestion(&vacQuestion[s.subState], s.userData.CountVac)
 		case sst_next:
 			s.resetSubStep()
@@ -200,10 +210,19 @@ func (s *UserSession) getAnswer(userData string) bool {
 	case st_country:
 		val, err := strconv.Atoi(userData)
 		if err != nil || val < baseQuestion[st_country].min || baseQuestion[st_country].max < val {
-			ok = false
+			if s.failed {
+				ok = false
+			} else {
+				s.failed = true
+				s.b.bot.Send(tgbotapi.NewMessage(s.chatID, warn_msg))
+				msg := tgbotapi.NewMessage(s.chatID, baseQuestion[st_country].ask)
+				msg.ReplyMarkup = baseQuestion[st_country].key
+				s.b.bot.Send(msg)
+			}
 		} else {
 			s.userData.Base[st_country] = val
 			s.state = st_birth
+			s.failed = false
 		}
 	case st_birth:
 		digit, err := strconv.Atoi(userData)
@@ -213,6 +232,7 @@ func (s *UserSession) getAnswer(userData string) bool {
 			s.userData.Base[st_birth] = digit
 			s.count = 0
 			s.state = st_gender
+			s.failed = false
 		} else if digit < 0 || 9 < digit || s.count == 1000 && digit != 1 && digit != 2 {
 			ok = false
 		} else {
@@ -222,18 +242,39 @@ func (s *UserSession) getAnswer(userData string) bool {
 				if 1920 <= s.userData.Base[st_birth] && s.userData.Base[st_birth] <= 2020 {
 					s.b.bot.Send(tgbotapi.NewMessage(s.chatID, strconv.Itoa(s.userData.Base[st_birth])))
 					s.state = st_gender
+					s.failed = false
 				} else {
 					ok = false
 				}
 			}
 		}
+		if s.userData.Base[st_birth] != 0 {
+			digit = s.userData.Base[st_birth]
+		}
+		if !ok && !s.failed {
+			ok = true
+			s.failed = true
+			s.count = 0
+			s.b.bot.Send(tgbotapi.NewMessage(s.chatID, strconv.Itoa(digit)))
+			s.b.bot.Send(tgbotapi.NewMessage(s.chatID, warn_msg))
+		}
+		if !ok {
+			s.b.bot.Send(tgbotapi.NewMessage(s.chatID, strconv.Itoa(digit)))
+		}
 	case st_gender, st_education, st_vacc_opin, st_orgn_opin, st_have_ill:
 		val, err := strconv.Atoi(userData)
 		idx := s.state - 1
 		if err != nil || val < baseQuestion[idx].min || baseQuestion[idx].max < val {
-			ok = false
+			if s.failed {
+				ok = false
+			} else {
+				s.failed = true
+				s.prevStep()
+				s.b.bot.Send(tgbotapi.NewMessage(s.chatID, warn_msg))
+			}
 		} else {
 			s.userData.Base[idx] = val
+			s.failed = false
 		}
 	case st_get_have_ill, st_get_have_vac:
 		val, err := strconv.Atoi(userData)
@@ -265,9 +306,16 @@ func (s *UserSession) getAnswer(userData string) bool {
 			subQuestion = vacQuestion
 		}
 		if err != nil || val < subQuestion[idx].min || subQuestion[idx].max < val {
-			ok = false
+			if s.failed {
+				ok = false
+			} else {
+				s.failed = true
+				s.prevSubStep()
+				s.b.bot.Send(tgbotapi.NewMessage(s.chatID, warn_msg))
+			}
 		} else {
 			s.userSub[idx] = val
+			s.failed = false
 		}
 	case st_check_result:
 		val, err := strconv.Atoi(userData)
