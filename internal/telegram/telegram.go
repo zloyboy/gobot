@@ -10,6 +10,8 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+var AnswerTout int
+
 type Bot struct {
 	bot   *tgbotapi.BotAPI
 	dbase *database.Dbase
@@ -18,7 +20,8 @@ type Bot struct {
 	uchan userChannel
 }
 
-func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase) *Bot {
+func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase, tout int) *Bot {
+	AnswerTout = tout
 	return &Bot{
 		bot:   bot,
 		dbase: db,
@@ -86,7 +89,7 @@ func (b *Bot) Run() {
 				log.Printf("Start user %d", userID)
 
 				b.uchan[userID] = makeChannel()
-				go RunSurvey(b, userID, chatID, b.uchan[userID], done)
+				go RunSurvey(b, userID, chatID, b.uchan[userID], done, AnswerTout)
 			}
 		case userID := <-done:
 			close(b.uchan[userID].stop)

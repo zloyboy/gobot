@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/zloyboy/gobot/internal/database"
 	"github.com/zloyboy/gobot/internal/telegram"
@@ -24,14 +25,20 @@ func main() {
 		log.Print("No .env file found")
 		return
 	}
-	API_TOKEN := os.Getenv("TELEGRAM_API_TOKEN")
 
+	ANSWER_TIMEOUT := os.Getenv("ANSWER_TIMEOUT")
+	answerTout, err := strconv.Atoi(ANSWER_TIMEOUT)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	API_TOKEN := os.Getenv("TELEGRAM_API_TOKEN")
 	bot, err := tgbotapi.NewBotAPI(API_TOKEN)
 	if err != nil {
 		log.Panic(err)
 	}
 	//bot.Debug = true
 
-	teleBot := telegram.NewBot(bot, dbase)
+	teleBot := telegram.NewBot(bot, dbase, answerTout)
 	teleBot.Run()
 }
