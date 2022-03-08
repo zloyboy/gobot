@@ -428,10 +428,12 @@ func RunSurvey(b *Bot, userID, chatID int64, uchan *Channel, done chan int64) {
 				return
 			case <-tout.C:
 				s.abort(tout_msg)
+				log.Printf("tout %d", userID)
 				return
 			case data := <-uchan.data:
 				if !s.getAnswer(data) {
 					s.abort(error_msg)
+					log.Printf("error %d", userID)
 					return
 				}
 				if !tout.Stop() {
