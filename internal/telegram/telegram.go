@@ -3,6 +3,7 @@ package telegram
 import (
 	"log"
 
+	"github.com/zloyboy/gobot/internal/config"
 	"github.com/zloyboy/gobot/internal/database"
 	"github.com/zloyboy/gobot/internal/static"
 	"github.com/zloyboy/gobot/internal/timeout"
@@ -10,20 +11,19 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var AnswerTout int
-
 type Bot struct {
 	bot   *tgbotapi.BotAPI
+	cfg   *config.Config
 	dbase *database.Dbase
 	stat  *static.Static
 	tout  *timeout.Timeout
 	uchan userChannel
 }
 
-func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase, tout int) *Bot {
-	AnswerTout = tout
+func NewBot(bot *tgbotapi.BotAPI, db *database.Dbase, cfg *config.Config) *Bot {
 	return &Bot{
 		bot:   bot,
+		cfg:   cfg,
 		dbase: db,
 		stat:  static.Stat(db),
 		tout:  timeout.Make(),
@@ -89,7 +89,7 @@ func (b *Bot) Run() {
 				log.Printf("Start user %d", userID)
 
 				b.uchan[userID] = makeChannel()
-				go RunSurvey(b, userID, chatID, b.uchan[userID], done, AnswerTout)
+				go RunSurvey(b, userID, chatID, b.uchan[userID], done, b.cfg.AnswerTout)
 			}
 		case userID := <-done:
 			close(b.uchan[userID].stop)

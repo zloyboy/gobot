@@ -3,13 +3,12 @@ package main
 import (
 	"log"
 	"os"
-	"strconv"
 
+	"github.com/zloyboy/gobot/internal/config"
 	"github.com/zloyboy/gobot/internal/database"
 	"github.com/zloyboy/gobot/internal/telegram"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	godotenv "github.com/joho/godotenv"
 )
 
 func main() {
@@ -17,28 +16,22 @@ func main() {
 	defer f.Close()
 	log.SetOutput(f)
 
+	cfg := config.ReadConfig()
+	if cfg == nil {
+		return
+	}
+	log.Printf("Start app ver %s", cfg.Version)
 	dbase := database.InitDb()
 	if dbase == nil {
 		return
 	}
-	if err := godotenv.Load("data/.env"); err != nil {
-		log.Print("No .env file found")
-		return
-	}
 
-	ANSWER_TIMEOUT := os.Getenv("ANSWER_TIMEOUT")
-	answerTout, err := strconv.Atoi(ANSWER_TIMEOUT)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	API_TOKEN := os.Getenv("TELEGRAM_API_TOKEN")
-	bot, err := tgbotapi.NewBotAPI(API_TOKEN)
+	bot, err := tgbotapi.NewBotAPI(cfg.ApiToken)
 	if err != nil {
 		log.Panic(err)
 	}
 	//bot.Debug = true
 
-	teleBot := telegram.NewBot(bot, dbase, answerTout)
+	teleBot := telegram.NewBot(bot, dbase, cfg)
 	teleBot.Run()
 }
