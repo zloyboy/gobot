@@ -33,5 +33,5 @@ func ReadConfig() *Config {
 		tout,
 		API_TOKEN,
 		VERSION,
-		os.Getenv("NOTIFY") == "YES"}
+		os.Getenv("NOTIFY") == "1"}
 }

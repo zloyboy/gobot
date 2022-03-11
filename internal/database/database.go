@@ -196,3 +196,43 @@ func (dbase *Dbase) ReadCountAge() (int, int, int, [6][3]int) {
 	//log.Println(cntAll, cntIll, cntVac, stat)
 	return cntAll, cntIll, cntVac, stat
 }
+
+func (dbase *Dbase) ReadChat() []int64 {
+	rows, err := dbase.db.Query("SELECT id from chat")
+	if err != nil {
+		return nil
+	}
+	defer rows.Close()
+
+	chat := make([]int64, 0)
+	var id int64
+	for rows.Next() {
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil
+		}
+		chat = append(chat, id)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil
+	}
+
+	return chat
+}
+
+func (dbase *Dbase) AddChat(id int64) {
+	stmt, _ := dbase.db.Prepare("INSERT INTO chat(id) VALUES(?)")
+	defer stmt.Close()
+	stmt.Exec(id)
+}
+
+func (dbase *Dbase) ExistChat(id int64) bool {
+	res := 0
+	err := dbase.db.QueryRow("SELECT EXISTS(SELECT 1 FROM chat WHERE id=?)", id).Scan(&res)
+	if err != nil || res != 1 {
+		return false
+	} else {
+		return true
+	}
+}

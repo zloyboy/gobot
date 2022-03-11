@@ -54,6 +54,15 @@ func (b *Bot) Run() {
 	b.setKeyboards()
 	b.stat.ReadStatFromDb()
 
+	if b.cfg.Notify {
+		chat := b.dbase.ReadChat()
+		log.Println("chat:", chat)
+		for _, user := range chat {
+			msg := tgbotapi.NewMessage(user, notify_msg+b.cfg.Version)
+			b.bot.Send(msg)
+		}
+	}
+
 	for {
 		select {
 		case update := <-updates:
@@ -87,6 +96,9 @@ func (b *Bot) Run() {
 			} else {
 				chatID := update.FromChat().ID
 				log.Printf("Start user %d", userID)
+				if !b.dbase.ExistChat(chatID) {
+					b.dbase.AddChat(chatID)
+				}
 
 				b.uchan[userID] = makeChannel()
 				go RunSurvey(b, userID, chatID, b.uchan[userID], done, b.cfg.AnswerTout)

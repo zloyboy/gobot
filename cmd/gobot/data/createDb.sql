@@ -12,6 +12,10 @@ create table if not exists user(
     countVac integer not null
 );
 
+create table if not exists chat(
+    id integer primary key
+);
+
 create table if not exists userAgeGroup(
     id integer primary key,
     created datetime,

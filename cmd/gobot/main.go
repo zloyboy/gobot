@@ -20,7 +20,7 @@ func main() {
 	if cfg == nil {
 		return
 	}
-	log.Printf("Start app ver %s", cfg.Version)
+	log.Printf("\nStart app ver %s", cfg.Version)
 	dbase := database.InitDb()
 	if dbase == nil {
 		return
