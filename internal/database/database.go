@@ -197,6 +197,31 @@ func (dbase *Dbase) ReadCountAge() (int, int, int, [6][3]int) {
 	return cntAll, cntIll, cntVac, stat
 }
 
+func (dbase *Dbase) ReadOpinion() ([3]int, [3]int) {
+	var vacOpn [3]int
+	var orgOpn [3]int
+
+	rows, _ := dbase.db.Query("SELECT vaccineOpinion, originOpinion, COUNT(*) FROM user GROUP BY vaccineOpinion, originOpinion")
+	defer rows.Close()
+
+	vac, org, count := 0, 0, 0
+	for rows.Next() {
+		err := rows.Scan(&vac, &org, &count)
+		if err != nil {
+			break
+		}
+		if 0 <= vac && vac <= 2 {
+			vacOpn[vac] += count
+		}
+		if -1 <= org && org <= 1 {
+			orgOpn[org+1] += count
+		}
+	}
+
+	//log.Println(vacOpn, orgOpn)
+	return vacOpn, orgOpn
+}
+
 func (dbase *Dbase) ReadChat() []int64 {
 	rows, err := dbase.db.Query("SELECT id from chat")
 	if err != nil {

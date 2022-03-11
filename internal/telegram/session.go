@@ -87,6 +87,10 @@ func (s *UserSession) sendStatic(header string) {
 	s.b.bot.Send(ill)
 	vac := tgbotapi.NewPhoto(s.chatID, s.b.stat.GetChartVac())
 	s.b.bot.Send(vac)
+	vacOpn := tgbotapi.NewPhoto(s.chatID, s.b.stat.GetChartVacOpn())
+	s.b.bot.Send(vacOpn)
+	orgOpn := tgbotapi.NewPhoto(s.chatID, s.b.stat.GetChartOrgOpn())
+	s.b.bot.Send(orgOpn)
 
 	msg = tgbotapi.NewMessage(s.chatID, repeat_msg)
 	msg.ReplyMarkup = startKeyboard

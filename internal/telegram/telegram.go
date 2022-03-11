@@ -59,6 +59,7 @@ func (b *Bot) Run() {
 		log.Println("chat:", chat)
 		for _, user := range chat {
 			msg := tgbotapi.NewMessage(user, notify_msg+b.cfg.Version)
+			msg.ReplyMarkup = startKeyboard
 			b.bot.Send(msg)
 		}
 	}
