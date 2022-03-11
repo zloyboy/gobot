@@ -213,8 +213,8 @@ func (dbase *Dbase) ReadOpinion() ([3]int, [3]int) {
 		if 0 <= vac && vac <= 2 {
 			vacOpn[vac] += count
 		}
-		if -1 <= org && org <= 1 {
-			orgOpn[org+1] += count
+		if 0 <= org && org <= 2 {
+			orgOpn[org] += count
 		}
 	}
 

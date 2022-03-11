@@ -229,14 +229,14 @@ func (s *Static) makeChartOrgOpn() {
 	if s.cntAll == 0 {
 		perNat, perHum, perUnk = 0, 0, 0
 	} else {
-		perNat = float64(s.orgOpn[1]) / float64(s.cntAll)
-		perHum = float64(s.orgOpn[2]) / float64(s.cntAll)
-		perUnk = float64(s.orgOpn[0]) / float64(s.cntAll)
+		perNat = float64(s.orgOpn[0]) / float64(s.cntAll)
+		perHum = float64(s.orgOpn[1]) / float64(s.cntAll)
+		perUnk = float64(s.orgOpn[2]) / float64(s.cntAll)
 	}
 
-	labelNat := fmt.Sprintf("Природа: %.2f %%\n%d из %d", perNat*100, s.orgOpn[1], s.cntAll)
-	labelHum := fmt.Sprintf("Люди: %.2f %%\n%d из %d", perHum*100, s.orgOpn[2], s.cntAll)
-	labelUnk := fmt.Sprintf("Не знаю: %.2f %%\n%d из %d", perUnk*100, s.orgOpn[0], s.cntAll)
+	labelNat := fmt.Sprintf("Природа: %.2f %%\n%d из %d", perNat*100, s.orgOpn[0], s.cntAll)
+	labelHum := fmt.Sprintf("Люди: %.2f %%\n%d из %d", perHum*100, s.orgOpn[1], s.cntAll)
+	labelUnk := fmt.Sprintf("Не знаю: %.2f %%\n%d из %d", perUnk*100, s.orgOpn[2], s.cntAll)
 
 	values := []chart.Value{{Label: labelNat, Value: perNat}, {Label: labelHum, Value: perHum}, {Label: labelUnk, Value: perUnk}}
 	response := s.makeChart("Мнение о происхождении вируса", values, 120, 50)

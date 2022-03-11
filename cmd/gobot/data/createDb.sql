@@ -66,13 +66,13 @@ create table if not exists userVaccineOpinion(
     id integer primary key,
     rus string
 );
-insert into userVaccineOpinion (rus) values ("Помогают"), ("Бесполезны"), ("Опасны");
+insert into userVaccineOpinion (rus) values ("Помогают"), ("Бесполезны"), ("Опасны"), ("Не знаю");
 
 create table if not exists userOriginOpinion(
     id integer primary key,
     rus string
 );
-insert into userOriginOpinion (rus) values ("Природа"), ("Люди");
+insert into userOriginOpinion (rus) values ("Природа"), ("Люди"), ("Не знаю");
 
 create table if not exists illnessSign(
     id integer primary key,
