@@ -13,6 +13,7 @@ type Config struct {
 	ApiToken   string
 	Version    string
 	Notify     bool
+	NotifyMsg  string
 }
 
 func ReadConfig() *Config {
@@ -33,5 +34,6 @@ func ReadConfig() *Config {
 		tout,
 		API_TOKEN,
 		VERSION,
-		os.Getenv("NOTIFY") == "1"}
+		os.Getenv("NOTIFY") != "",
+		os.Getenv("NOTIFY")}
 }

@@ -56,9 +56,10 @@ func (b *Bot) Run() {
 
 	if b.cfg.Notify {
 		chat := b.dbase.ReadChat()
+		//chat := []int64{}
 		log.Println("chat:", chat)
 		for _, user := range chat {
-			msg := tgbotapi.NewMessage(user, notify_msg+b.cfg.Version)
+			msg := tgbotapi.NewMessage(user, b.cfg.NotifyMsg)
 			msg.ReplyMarkup = startKeyboard
 			b.bot.Send(msg)
 		}
