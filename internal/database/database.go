@@ -92,7 +92,7 @@ func (dbase *Dbase) ExistId(id int64) bool {
 	}
 }
 
-func (dbase *Dbase) Insert(teleId int64, date string, usr user.UserData) error {
+func (dbase *Dbase) Insert(date string, usr user.UserData) error {
 	dbase.mx.Lock()
 	defer dbase.mx.Unlock()
 
@@ -103,7 +103,7 @@ func (dbase *Dbase) Insert(teleId int64, date string, usr user.UserData) error {
 		"(teleId, created, modified, country, birth, gender, education, vaccineOpinion, originOpinion, countIll, countVac)" +
 		"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 	defer stmt.Close()
-	stmt.Exec(teleId, date, date, usr.Base[idx_country], usr.Base[idx_birth], usr.Base[idx_gender],
+	stmt.Exec(usr.Id, date, date, usr.Base[idx_country], usr.Base[idx_birth], usr.Base[idx_gender],
 		usr.Base[idx_education], usr.Base[idx_vacc_opin], usr.Base[idx_orgn_opin], usr.CountIll, usr.CountVac)
 
 	age_group := user.GetAgeGroup(time.Now().Year() - usr.Base[idx_birth])
@@ -117,18 +117,18 @@ func (dbase *Dbase) Insert(teleId int64, date string, usr user.UserData) error {
 	}
 
 	stmt, _ = tx.Prepare("INSERT INTO userAgeGroup (id, created, teleId, have_ill, have_vac, age_group) values(?, ?, ?, ?, ?, ?)")
-	stmt.Exec(nil, date, teleId, haveIll, haveVac, age_group)
+	stmt.Exec(nil, date, usr.Id, haveIll, haveVac, age_group)
 
 	for i := 0; i < usr.CountIll; i++ {
 		age := usr.Ill[i][idx_year] - usr.Base[idx_birth]
 		stmt, _ = tx.Prepare("INSERT INTO userIllness (id, created, teleId, year, month, sign, degree, age) values(?, ?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, usr.Ill[i][idx_year], usr.Ill[i][idx_month], usr.Ill[i][idx_sign], usr.Ill[i][idx_degree], age)
+		stmt.Exec(nil, date, usr.Id, usr.Ill[i][idx_year], usr.Ill[i][idx_month], usr.Ill[i][idx_sign], usr.Ill[i][idx_degree], age)
 	}
 
 	for i := 0; i < usr.CountVac; i++ {
 		age := usr.Vac[i][idx_year] - usr.Base[idx_birth]
 		stmt, _ = tx.Prepare("INSERT INTO userVaccine (id, created, teleId, year, month, kind, effect, age) values(?, ?, ?, ?, ?, ?, ?, ?)")
-		stmt.Exec(nil, date, teleId, usr.Vac[i][idx_year], usr.Vac[i][idx_month], usr.Vac[i][idx_kind], usr.Vac[i][idx_effect], age)
+		stmt.Exec(nil, date, usr.Id, usr.Vac[i][idx_year], usr.Vac[i][idx_month], usr.Vac[i][idx_kind], usr.Vac[i][idx_effect], age)
 	}
 
 	tx.Commit()

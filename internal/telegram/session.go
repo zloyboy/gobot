@@ -53,7 +53,7 @@ func makeUserSession(b *Bot, userID, chatID int64) *UserSession {
 	return &UserSession{b,
 		0, 0, 0,
 		userID, chatID,
-		user.MakeUser(),
+		user.MakeUser(userID),
 		user.MakeSubUser(),
 		false}
 }
@@ -398,7 +398,7 @@ func (s *UserSession) writeResult() {
 		s.userID, country[idx_country][0], birth_year, idx_gender, education[idx_education][0],
 		vaccine[idx_vacc_opin][0], origin[idx_orgn_opin][0], s.userData.CountIll, s.userData.CountVac)
 
-	s.b.dbase.Insert(s.userID,
+	s.b.dbase.Insert(
 		time.Now().Local().Format("2006-01-02 15:04:05"),
 		s.userData)
 	s.b.stat.RefreshStatic(s.userData)

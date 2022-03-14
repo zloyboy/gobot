@@ -19,6 +19,7 @@ const (
 )
 
 type UserData struct {
+	Id       int64
 	Base     [6]int
 	CountIll int
 	Ill      [][4]int
@@ -26,8 +27,9 @@ type UserData struct {
 	Vac      [][4]int
 }
 
-func MakeUser() UserData {
+func MakeUser(id int64) UserData {
 	return UserData{
+		Id:       id,
 		Base:     [6]int{-1, -1, -1, -1, -1, -1},
 		CountIll: 0,
 		Ill:      nil,
