@@ -21,6 +21,14 @@ const (
 	idxBirth = user.Idx_birth
 )
 
+const (
+	idx_birth = iota
+	idx_gender
+	idx_educat
+	idx_vacopn
+	idx_orgopn
+)
+
 type Static struct {
 	mx                                                     sync.RWMutex
 	cntAll, cntIll, cntVac                                 int
@@ -105,6 +113,15 @@ func (s *Static) RefreshStatic(usr user.UserData) {
 	s.age_stat[ageGrp][0]++
 	s.age_stat[ageGrp][1] += haveIll
 	s.age_stat[ageGrp][2] += haveVac
+
+	vac := usr.Base[idx_vacopn]
+	if 0 <= vac && vac <= 2 {
+		s.vacOpn[vac]++
+	}
+	org := usr.Base[idx_orgopn]
+	if 0 <= org && org <= 2 {
+		s.orgOpn[org]++
+	}
 
 	s.makeChartAll()
 	s.makeChartIll()
