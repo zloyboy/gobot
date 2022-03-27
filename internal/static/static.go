@@ -10,7 +10,7 @@ import (
 	"github.com/zloyboy/gobot/internal/user"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	chart "github.com/wcharczuk/go-chart"
+	chart "github.com/zloyboy/chart"
 )
 
 const (
@@ -134,8 +134,7 @@ func (s *Static) RefreshStatic(usr user.UserData) {
 
 func (s *Static) makeChart(title string, values []chart.Value, bWidth, bSpace int) chart.BarChart {
 	return chart.BarChart{
-		Title:      title,
-		TitleStyle: chart.StyleShow(),
+		Title: title,
 		Background: chart.Style{
 			Padding: chart.Box{
 				Top:    40,
@@ -148,9 +147,7 @@ func (s *Static) makeChart(title string, values []chart.Value, bWidth, bSpace in
 		Height:     200,
 		BarWidth:   bWidth,
 		BarSpacing: bSpace,
-		XAxis:      chart.StyleShow(),
 		YAxis: chart.YAxis{
-			Style:          chart.StyleShow(),
 			ValueFormatter: chart.PercentValueFormatter,
 			Range: &chart.ContinuousRange{
 				Min: 0,
