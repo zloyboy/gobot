@@ -168,28 +168,28 @@ func (dbase *Dbase) ReadCaption(table string, arg ...int) [][2]string {
 	return caps
 }
 
-func (dbase *Dbase) ReadCountAge() (int, int, int, [6][3]int) {
-	var cntAll, cntIll, cntVac int
+func (dbase *Dbase) ReadCountAge() ([2]int, [2]int, [2]int, [6][3]int) {
+	var cntAll, cntIll, cntVac [2]int
 	var stat [6][3]int
 
-	rows, _ := dbase.db.Query("SELECT age_group, have_ill, have_vac, COUNT(*) FROM userAgeGroup GROUP BY age_group, have_ill, have_vac")
+	rows, _ := dbase.db.Query("SELECT age_group, gender, have_ill, have_vac, COUNT(*) FROM userAgeGroup GROUP BY age_group, gender, have_ill, have_vac")
 	defer rows.Close()
 
-	ageGrp, ill, vac, count := 0, 0, 0, 0
+	ageGrp, gen, ill, vac, count := 0, 0, 0, 0, 0
 	for rows.Next() {
-		err := rows.Scan(&ageGrp, &ill, &vac, &count)
+		err := rows.Scan(&ageGrp, &gen, &ill, &vac, &count)
 		if err != nil {
 			break
 		}
 		stat[ageGrp][0] += count
-		cntAll += count
+		cntAll[gen] += count
 		if ill == 1 {
 			stat[ageGrp][1] += count
-			cntIll += count
+			cntIll[gen] += count
 		}
 		if vac == 1 {
 			stat[ageGrp][2] += count
-			cntVac += count
+			cntVac[gen] += count
 		}
 	}
 

@@ -23,6 +23,7 @@ create table if not exists userAgeGroup(
     have_ill integer not null,
     have_vac integer not null,
     age_group integer not null,
+    gender integer,
     FOREIGN KEY(teleId) REFERENCES user(teleId)
 );
 
