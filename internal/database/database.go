@@ -115,9 +115,10 @@ func (dbase *Dbase) Insert(date string, usr user.UserData) error {
 	if 0 < usr.CountVac {
 		haveVac = 1
 	}
+	gender := usr.Base[idx_gender]
 
-	stmt, _ = tx.Prepare("INSERT INTO userAgeGroup (id, created, teleId, have_ill, have_vac, age_group) values(?, ?, ?, ?, ?, ?)")
-	stmt.Exec(nil, date, usr.Id, haveIll, haveVac, age_group)
+	stmt, _ = tx.Prepare("INSERT INTO userAgeGroup (id, created, teleId, have_ill, have_vac, age_group, gender) values(?, ?, ?, ?, ?, ?, ?)")
+	stmt.Exec(nil, date, usr.Id, haveIll, haveVac, age_group, gender)
 
 	for i := 0; i < usr.CountIll; i++ {
 		age := usr.Ill[i][idx_year] - usr.Base[idx_birth]
@@ -168,9 +169,9 @@ func (dbase *Dbase) ReadCaption(table string, arg ...int) [][2]string {
 	return caps
 }
 
-func (dbase *Dbase) ReadCountAge() ([2]int, [2]int, [2]int, [6][3]int) {
+func (dbase *Dbase) ReadCountAge() ([2]int, [2]int, [2]int, [6][2][3]int) {
 	var cntAll, cntIll, cntVac [2]int
-	var stat [6][3]int
+	var stat [6][2][3]int
 
 	rows, _ := dbase.db.Query("SELECT age_group, gender, have_ill, have_vac, COUNT(*) FROM userAgeGroup GROUP BY age_group, gender, have_ill, have_vac")
 	defer rows.Close()
@@ -181,14 +182,14 @@ func (dbase *Dbase) ReadCountAge() ([2]int, [2]int, [2]int, [6][3]int) {
 		if err != nil {
 			break
 		}
-		stat[ageGrp][0] += count
+		stat[ageGrp][gen][0] += count
 		cntAll[gen] += count
 		if ill == 1 {
-			stat[ageGrp][1] += count
+			stat[ageGrp][gen][1] += count
 			cntIll[gen] += count
 		}
 		if vac == 1 {
-			stat[ageGrp][2] += count
+			stat[ageGrp][gen][2] += count
 			cntVac[gen] += count
 		}
 	}

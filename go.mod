@@ -8,7 +8,7 @@ require github.com/joho/godotenv v1.4.0
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.11
-	github.com/zloyboy/chart v0.0.0-20220327153432-266f064e3860
+	github.com/zloyboy/chart v0.0.2
 )
 
 require (
